@@ -34,7 +34,18 @@ export const InitialSetupScreen = ({ route }) => {
 
   const handleSubmit = async () => {
     try {
-      // Add validation
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        Alert.alert('Error', 'Please fill all password fields');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        Alert.alert('Error', 'New passwords do not match');
+        return;
+      }
+
+      setLoading(true);
+
       if (!currentPassword || !newPassword || !confirmPassword) {
         Alert.alert('Error', 'Please fill all password fields');
         return;
@@ -50,8 +61,6 @@ export const InitialSetupScreen = ({ route }) => {
         navigation.replace('Login');
         return;
       }
-
-      setLoading(true);
 
       const formData = new FormData();
       formData.append('old_password', currentPassword);
@@ -73,12 +82,12 @@ export const InitialSetupScreen = ({ route }) => {
         'Password changed successfully',
         [{ text: 'OK', onPress: () => navigation.replace('Home') }]
       );
+
     } catch (error) {
       console.error('Change password error:', error.response?.data);
       Alert.alert(
         'Error',
-        error.response?.data?.error || 'Failed to change password',
-        [{ text: 'OK' }]
+        error.response?.data?.error || 'Failed to change password'
       );
     } finally {
       setLoading(false);

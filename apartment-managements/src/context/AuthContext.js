@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
 
       // First, get the OAuth2 token
-      const tokenData = new URLSearchParams();
+      const tokenData = new FormData();
       tokenData.append('grant_type', 'password');
       tokenData.append('username', username);
       tokenData.append('password', password);
@@ -25,10 +25,10 @@ export const AuthProvider = ({ children }) => {
 
       const tokenResponse = await axios.post(
         `${API_BASE_URL}${API_ENDPOINTS.TOKEN}`,
-        tokenData.toString(),
+        tokenData,
         {
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'multipart/form-data'
           }
         }
       );
@@ -47,10 +47,14 @@ export const AuthProvider = ({ children }) => {
 
       console.log('Login response:', response.data);
 
-      // Store user data
-      const userData = response.data;
-      setUser(userData);
-      return { success: true, user: userData };
+      if (response.data.user) {
+        // Store user data
+        const userData = response.data.user;
+        setUser(userData);
+        return { success: true, user: userData };
+      }
+
+      throw new Error('Invalid response format');
 
     } catch (err) {
       console.error('Login error details:', {

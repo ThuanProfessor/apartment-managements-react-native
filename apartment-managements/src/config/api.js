@@ -5,15 +5,16 @@ export const API_BASE_URL = 'https://bethuandethuong.pythonanywhere.com';
 
 export const API_ENDPOINTS = {
   // Auth endpoints
-  TOKEN: '/o/token/',  // OAuth2 token endpoint
-  CURRENT_USER: '/users/current-user/',  // Django UserViewSet current-user endpoint
+  LOGIN: '/auth/login/',  // Django AuthViewSet login endpoint
+  CURRENT_USER: '/users/me/',  // Django UserViewSet current-user endpoint
   CHANGE_PASSWORD: '/users/change_pass/',  // Django UserViewSet change-pass endpoint
+  TOKEN: '/o/token/',  // OAuth2 token endpoint
 };
 
 // OAuth2 configuration
 export const OAUTH_CONFIG = {
-  CLIENT_ID: 'zvoSUNtjdcLVl9GI95bjQ9wGVjAEYaxOHJysLrZA',
-  CLIENT_SECRET: 'jnHoe8Dgbu4PudCfoitcEigXOzxxCDlgCW9M24bpkRLC8AsS4u3Ya7V11AsCO3M4tzaVoOmgaCKpHf5uVFWQncaLCAfc8SBtmDtcGIkskUy6YSps2UzkOIyUaqGrWpcV'
+  CLIENT_ID: 'c81OcWdfTtyKMGtnTdDbbmRrmfjARgFGphcvXQwy',
+  CLIENT_SECRET: 'yHyrcPp7LfKC3dI4pfh1A3bopWltJ84gGDRHCDNwsUpnzM2V4hdNB79qoqa5tkNkUPnSTBw4Br1zRFqs3l2LaUdwTQp4tzaDa00l4BUNrJXdlQHXjRBfjYZjioKBxKMX',
 };
 
 // Configure axios defaults
