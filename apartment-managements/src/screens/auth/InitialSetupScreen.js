@@ -4,7 +4,7 @@ import { TextInput, Button, Text, Avatar } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
-import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
+import API, { endpoints } from '../../config/api';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

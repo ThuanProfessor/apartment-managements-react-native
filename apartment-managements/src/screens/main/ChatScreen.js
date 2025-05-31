@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { TextInput, IconButton, Text, Avatar, Surface, ActivityIndicator } from 'react-native-paper';
+import { TextInput, IconButton, Text, Avatar, Surface, ActivityIndicator, Divider } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 import { chatService } from '../../services/chatService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 const ChatScreen = () => {
   const { user } = useAuth();
@@ -13,8 +15,10 @@ const ChatScreen = () => {
   const [typingUsers, setTypingUsers] = useState([]);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const scrollViewRef = useRef();
   const typingTimeoutRef = useRef(null);
+  const messageInputRef = useRef();
 
   useEffect(() => {
     // Subscribe to chat messages and typing status
@@ -99,37 +103,66 @@ const ChatScreen = () => {
     const isOwnMessage = msg.userId === user.id;
 
     return (
-      <Surface
-        key={msg.id || index}
+      <View
+        key={msg.id}
         style={[
-          styles.messageBubble,
-          isOwnMessage ? styles.ownMessage : styles.otherMessage,
+          styles.messageContainer,
+          isSentByMe ? styles.sentMessage : styles.receivedMessage,
+          isFirstInGroup && styles.firstInGroup,
+          isLastInGroup && styles.lastInGroup
         ]}
       >
-        {!isOwnMessage && (
-          <Text style={styles.username}>
-            {msg.isAdmin ? 'Management' : msg.username}
-          </Text>
+        {!isSentByMe && isFirstInGroup && (
+          <Avatar.Text
+            size={32}
+            label="A"
+            style={styles.avatar}
+            labelStyle={styles.avatarLabel}
+          />
         )}
-        <Text style={styles.messageText}>{msg.text}</Text>
-        <View style={styles.messageFooter}>
-          <Text style={styles.timestamp}>
-            {msg.timestamp?.toDate().toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </Text>
-          {isOwnMessage && (
-            <MaterialCommunityIcons
-              name={msg.read ? 'check-all' : 'check'}
-              size={16}
-              color={msg.read ? '#2196F3' : '#999'}
-              style={styles.readStatus}
-            />
+        <Surface
+          style={[
+            styles.messageBubble,
+            isSentByMe ? styles.sentBubble : styles.receivedBubble
+          ]}
+        >
+          {!isSentByMe && isFirstInGroup && (
+            <Text style={styles.senderName}>Quản lý</Text>
           )}
-        </View>
-      </Surface>
+          <Text style={[styles.messageText, isSentByMe && styles.sentMessageText]}>
+            {msg.text}
+          </Text>
+          <Text style={[styles.timestamp, isSentByMe && styles.sentTimestamp]}>
+            {formatMessageTime(msg.timestamp)}
+            {isSentByMe && msg.read && (
+              <MaterialCommunityIcons
+                name="check-all"
+                size={14}
+                color="#4CAF50"
+                style={styles.readIcon}
+              />
+            )}
+          </Text>
+        </Surface>
+      </View>
     );
+  };
+
+  const formatMessageTime = (timestamp) => {
+    if (!timestamp) return '';
+    return format(timestamp, 'HH:mm, dd/MM/yyyy', { locale: vi });
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Load more messages or refresh current messages
+      await chatService.loadMoreMessages(user.id);
+    } catch (err) {
+      setError('Không thể tải tin nhắn. Vui lòng thử lại.');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   return (
@@ -138,54 +171,177 @@ const ChatScreen = () => {
       style={styles.container}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
+      {error && (
+        <Surface style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <IconButton icon="close" size={20} onPress={() => setError(null)} />
+        </Surface>
+      )}
+
       <ScrollView
         ref={scrollViewRef}
         style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
-        onContentSizeChange={() =>
-          scrollViewRef.current?.scrollToEnd({ animated: true })
-        }
+        contentContainerStyle={styles.messagesList}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
       >
         {messages.map((msg, index) => renderMessage(msg, index))}
       </ScrollView>
 
-      {error && (
-        <Text style={styles.errorText}>{error}</Text>
-      )}
-
       {typingUsers.length > 0 && (
         <View style={styles.typingContainer}>
-          <ActivityIndicator size={20} style={styles.typingIndicator} />
+          <ActivityIndicator size={16} style={styles.typingIndicator} />
           <Text style={styles.typingText}>
-            {typingUsers.map(u => u.username).join(', ')} 
-            {typingUsers.length === 1 ? 'is' : 'are'} typing...
+            {typingUsers.map(u => u.username).join(', ')} đang nhập...
           </Text>
         </View>
       )}
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          value={message}
-          onChangeText={setMessage}
-          placeholder="Type a message..."
-          style={styles.input}
-          multiline
-          maxLength={500}
-          disabled={sending}
-        />
-        <IconButton
-          icon="send"
-          size={24}
-          onPress={sendMessage}
-          disabled={!message.trim() || sending}
-          loading={sending}
-        />
-      </View>
+      <Surface style={styles.inputContainer} elevation={4}>
+        <View style={styles.inputRow}>
+          <TextInput
+            ref={messageInputRef}
+            style={styles.input}
+            placeholder="Nhập tin nhắn..."
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            maxLength={1000}
+            right={<TextInput.Affix text={`${message.length}/1000`} />}
+          />
+          <IconButton
+            icon="send"
+            size={24}
+            mode={message.trim() ? 'contained' : 'outlined'}
+            disabled={!message.trim() || sending}
+            onPress={sendMessage}
+            loading={sending}
+            style={styles.sendButton}
+          />
+        </View>
+      </Surface>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  errorContainer: {
+    margin: 8,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#ffebee',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  errorText: {
+    color: '#d32f2f',
+    flex: 1,
+    marginRight: 8,
+  },
+  messagesContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  messagesList: {
+    paddingBottom: 16,
+  },
+  messageContainer: {
+    marginBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  firstInGroup: {
+    marginTop: 16,
+  },
+  lastInGroup: {
+    marginBottom: 16,
+  },
+  avatar: {
+    marginRight: 8,
+    backgroundColor: '#1976d2',
+  },
+  avatarLabel: {
+    fontSize: 16,
+    color: '#fff',
+  },
+  messageBubble: {
+    maxWidth: '75%',
+    padding: 12,
+    borderRadius: 16,
+    elevation: 1,
+  },
+  sentMessage: {
+    justifyContent: 'flex-end',
+  },
+  receivedMessage: {
+    justifyContent: 'flex-start',
+  },
+  sentBubble: {
+    backgroundColor: '#2196f3',
+    borderTopRightRadius: 4,
+  },
+  receivedBubble: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 4,
+  },
+  senderName: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#212121',
+  },
+  sentMessageText: {
+    color: '#fff',
+  },
+  timestamp: {
+    fontSize: 11,
+    color: '#757575',
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  sentTimestamp: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  readIcon: {
+    marginLeft: 4,
+  },
+  inputContainer: {
+    padding: 8,
+    backgroundColor: '#fff',
+  },
+  typingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  typingIndicator: {
+    marginRight: 8,
+  },
+  typingText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  sendButton: {
+    margin: 4,
+  },
   errorText: {
     color: '#f44336',
     textAlign: 'center',
