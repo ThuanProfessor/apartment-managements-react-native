@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { View, Button, Alert, Text, ActivityIndicator } from "react-native";
 // import InAppBrowser from "react-native-inappbrowser-reborn";
 import { Linking } from 'react-native';
-import api from "../configs/API";
+import api from "../../config/api";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import styles from './styles';
+import styles from '../../styles/styles';
 const PaymentVnpayScreen = ({ route }) => {
     const { billId } = route.params || {};
     const [loading, setLoading] = useState(false);

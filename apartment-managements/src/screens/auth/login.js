@@ -2,11 +2,11 @@ import React, { useState, useContext } from "react";
 import { Text, View, TextInput, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import MyContext from "../configs/MyContext"; // Context dùng useContext
+import MyContext from "../../config/MyContext"; // Context dùng useContext
 import qs from "qs";
 import { endAsyncEvent, endEvent } from "react-native/Libraries/Performance/Systrace";
 
-import API, { endpoints, authAPI } from "../configs/API";
+import api, { API_ENDPOINTS } from "../../config/api";
 const Login = ({ navigation }) => {
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();

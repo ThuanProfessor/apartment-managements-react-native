@@ -1,6 +1,6 @@
 
 import { useNavigation } from "@react-navigation/native";
-import { API, endpoints } from "../configs/API";
+import api, { API_ENDPOINTS } from "../../config/api";
 import React, { useEffect, useState } from "react";
 import { Chip } from "react-native-paper";
 import { StyleSheet } from "react-native";
