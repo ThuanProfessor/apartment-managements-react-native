@@ -1,172 +1,165 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { TextInput, Button, Text, HelperText, Banner } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { TextInput, Button, Title, Text, Surface, useTheme } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 const LoginScreen = () => {
-  const { login, loading, error: authError, setError } = useAuth();
+  const { login, error: authError, setError } = useAuth();
   const navigation = useNavigation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    return () => setError(null);
-  }, []);
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const theme = useTheme();
 
   const handleLogin = async () => {
-    if (validateForm()) {
-      const result = await login(username.trim(), password);
+    if (!username || !password) {
+      setError('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await login(username, password);
+      console.log('Login result:', result);
       
-      if (result.success) {
-        if (result.user.is_first_login) {
-          // Redirect to change password screen
-          navigation.replace('InitialSetup', {
-            requirePasswordChange: true,
-            requireAvatar: true
-          });
-        } else {
-          // Go to home screen
-          navigation.replace('Home');
-        }
-      } else {
-        setError(result.error);
-      }
+      // Login success - navigation will be handled by App.js based on isFirstLogin state
+      // No need to navigate here as the AuthContext state change will trigger App.js navigation
+    } catch (error) {
+      console.error('Login error:', error);
+      const errorMessage = error?.response?.data?.detail || 
+                          error?.response?.data?.error_description || 
+                          'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <View style={styles.container}>
+      <ImageBackground
+        source={require('../../../assets/images/background-images-login.jpg')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+      <KeyboardAvoidingView 
+        style={styles.formWrapper}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {authError && (
-          <Banner
-            visible={true}
-            actions={[{ label: 'Dismiss', onPress: () => setError(null) }]}
-            style={styles.errorBanner}
-          >
-            {authError}
-          </Banner>
-        )}
-
-        <View style={styles.logoContainer}>
-          <TextInput.Icon 
-            icon="home-city"
-            size={80}
-            style={styles.logo}
-          />
-          <Text style={styles.title}>Apartment Management</Text>
-        </View>
-
-        <TextInput
-          label="Username"
-          value={username}
-          onChangeText={(text) => {
-            setUsername(text);
-            setErrors({ ...errors, username: '' });
-          }}
-          style={styles.input}
-          error={!!errors.username}
-          disabled={loading}
-          autoCapitalize="none"
-          left={<TextInput.Icon icon="account" />}
-        />
-        <HelperText type="error" visible={!!errors.username}>
-          {errors.username}
-        </HelperText>
-
-        <TextInput
-          label="Password"
-          value={password}
-          onChangeText={(text) => {
-            setPassword(text);
-            setErrors({ ...errors, password: '' });
-          }}
-          secureTextEntry={!showPassword}
-          style={styles.input}
-          error={!!errors.password}
-          disabled={loading}
-          left={<TextInput.Icon icon="lock" />}
-          right={
-            <TextInput.Icon
-              icon={showPassword ? 'eye-off' : 'eye'}
-              onPress={() => setShowPassword(!showPassword)}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Surface style={styles.logoContainer} elevation={0}>
+            <MaterialCommunityIcons
+              name="home-city"
+              size={100}
+              color="#FFFFFF"
             />
-          }
-        />
-        <HelperText type="error" visible={!!errors.password}>
-          {errors.password}
-        </HelperText>
+            <Title style={styles.title}>Apartment Management</Title>
+            <Text style={styles.subtitle}>Đăng nhập để tiếp tục</Text>
+          </Surface>
 
-        <Button
-          mode="contained"
-          onPress={handleLogin}
-          loading={loading}
-          style={styles.button}
-          disabled={loading || !username || !password}
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </Button>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <Surface style={styles.formContainer} elevation={2}>
+            <TextInput
+              label="Tên đăng nhập"
+              value={username}
+              onChangeText={setUsername}
+              style={styles.input}
+              mode="outlined"
+              left={<TextInput.Icon icon="account" />}
+              autoCapitalize="none"
+            />
+
+            <TextInput
+              label="Mật khẩu"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={secureTextEntry}
+              style={styles.input}
+              mode="outlined"
+              left={<TextInput.Icon icon="lock" />}
+              right={
+                <TextInput.Icon
+                  icon={secureTextEntry ? 'eye' : 'eye-off'}
+                  onPress={() => setSecureTextEntry(!secureTextEntry)}
+                />
+              }
+            />
+
+            <Button
+              mode="contained"
+              onPress={handleLogin}
+              loading={loading}
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+            >
+              Đăng nhập
+            </Button>
+
+            {authError && <Text style={styles.error}>{authError}</Text>}
+          </Surface>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  formWrapper: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
-  },
-  errorBanner: {
-    marginBottom: 20,
-    backgroundColor: '#ffebee',
+    padding: 16,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
-  },
-  logo: {
-    marginBottom: 16,
+    marginBottom: 24,
+    backgroundColor: 'transparent',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    marginBottom: 24,
     textAlign: 'center',
+    color: '#FFFFFF', // Make title text white
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  subtitle: {
+    marginTop: 8,
+    color: '#FFFFFF',
+    fontSize: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  formContainer: {
+    padding: 20,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   input: {
-    marginBottom: 4,
-    backgroundColor: '#fff',
+    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Make input background slightly transparent
   },
   button: {
     marginTop: 20,

@@ -1,81 +1,97 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Card, Title, Paragraph, Button, useTheme } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { Surface, Text, Title, Card, Avatar, useTheme, IconButton } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useAuth();
   const theme = useTheme();
 
-  const menuItems = [
-    {
-      title: 'Payments',
-      icon: 'cash',
-      description: 'View and make payments',
-      onPress: () => navigation.navigate('Payments'),
-    },
-    {
-      title: 'Parking',
-      icon: 'car',
-      description: 'Manage parking registrations',
-      onPress: () => navigation.navigate('Parking'),
-    },
-    {
-      title: 'Locker',
-      icon: 'locker',
-      description: 'Check your locker items',
-      onPress: () => navigation.navigate('Locker'),
-    },
-    {
-      title: 'Complaints',
-      icon: 'message-alert',
-      description: 'Submit complaints or feedback',
-      onPress: () => navigation.navigate('Complaints'),
-    },
-    {
-      title: 'Surveys',
-      icon: 'clipboard-text',
-      description: 'Participate in surveys',
-      onPress: () => navigation.navigate('Surveys'),
-    },
-    {
-      title: 'Chat',
-      icon: 'chat',
-      description: 'Chat with management',
-      onPress: () => navigation.navigate('Chat'),
-    },
+  const quickActions = [
+    { title: 'Thanh Toán', icon: 'credit-card-outline', color: '#4CAF50', route: 'Payments' },
+    { title: 'Phản Ánh', icon: 'message-badge-outline', color: '#F44336', route: 'Complaints' },
+    { title: 'Tủ Đồ', icon: 'locker-multiple', color: '#2196F3', route: 'Locker' },
+    { title: 'Khảo Sát', icon: 'clipboard-text-outline', color: '#FF9800', route: 'Surveys' },
   ];
 
   return (
     <ScrollView style={styles.container}>
-      <Card style={styles.welcomeCard}>
+      {/* Welcome Card */}
+      <Surface style={styles.headerCard} elevation={2}>
+        <View style={styles.welcomeSection}>
+          <Avatar.Icon size={60} icon="account-circle" style={{ backgroundColor: theme.colors.primary }} />
+          <View style={styles.welcomeText}>
+            <Title>Xin chào, {user?.username || 'Cư dân'}!</Title>
+            <Text>Chúc bạn một ngày tốt lành</Text>
+          </View>
+        </View>
+      </Surface>
+
+      {/* Quick Actions */}
+      <View style={styles.section}>
+        <Title style={styles.sectionTitle}>Thao tác nhanh</Title>
+        <View style={styles.quickActions}>
+          {quickActions.map((action, index) => (
+            <Card
+              key={index}
+              style={styles.actionCard}
+              onPress={() => navigation.navigate(action.route)}
+            >
+              <Card.Content style={styles.actionContent}>
+                <IconButton
+                  icon={action.icon}
+                  size={32}
+                  iconColor={action.color}
+                  style={styles.actionIcon}
+                />
+                <Text style={styles.actionTitle}>{action.title}</Text>
+              </Card.Content>
+            </Card>
+          ))}
+        </View>
+      </View>
+
+      {/* Recent Activities */}
+      <View style={styles.section}>
+        <Title style={styles.sectionTitle}>Hoạt động gần đây</Title>
+        <Card style={styles.activityCard}>
+          <Card.Content>
+            <View style={styles.activity}>
+              <Avatar.Icon size={40} icon="cash" style={{ backgroundColor: '#4CAF50' }} />
+              <View style={styles.activityDetails}>
+                <Text style={styles.activityTitle}>Thanh toán tiền điện tháng 5</Text>
+                <Text style={styles.activityTime}>2 giờ trước</Text>
+              </View>
+              <Text style={[styles.activityAmount, { color: '#4CAF50' }]}>500,000 đ</Text>
+            </View>
+          </Card.Content>
+        </Card>
+      </View>
+
+      {/* Announcements */}
+      <Card style={styles.notificationCard}>
         <Card.Content>
-          <Title>Welcome, {user?.username}!</Title>
-          <Paragraph>What would you like to do today?</Paragraph>
+          <View style={styles.cardHeader}>
+            <MaterialCommunityIcons name="bell-outline" size={24} color="#1976D2" />
+            <Title style={styles.cardTitle}>Thông báo</Title>
+          </View>
+          <Text style={styles.emptyText}>Không có thông báo mới</Text>
         </Card.Content>
       </Card>
 
-      <View style={styles.menuGrid}>
-        {menuItems.map((item, index) => (
-          <Card
-            key={index}
-            style={styles.menuItem}
-            onPress={item.onPress}
-          >
-            <Card.Content style={styles.menuContent}>
-              <MaterialCommunityIcons
-                name={item.icon}
-                size={32}
-                color={theme.colors.primary}
-              />
-              <Title style={styles.menuTitle}>{item.title}</Title>
-              <Paragraph style={styles.menuDescription}>
-                {item.description}
-              </Paragraph>
-            </Card.Content>
-          </Card>
-        ))}
+      {/* Last Section */}
+      <View style={[styles.section, styles.lastSection]}>
+        <Title style={styles.sectionTitle}>Thông báo</Title>
+        <Card style={styles.announcementCard}>
+          <Card.Content>
+            <Text style={styles.announcementTitle}>Bảo trì hệ thống nước</Text>
+            <Text style={styles.announcementTime}>Hôm nay, 14:00 - 17:00</Text>
+            <Text style={styles.announcementDesc}>
+              Kính gửi quý cư dân, chúng tôi sẽ tiến hành bảo trì hệ thống nước trong khu vực...
+            </Text>
+          </Card.Content>
+        </Card>
       </View>
     </ScrollView>
   );
@@ -86,33 +102,91 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  welcomeCard: {
+  headerCard: {
     margin: 16,
-    elevation: 4,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: 'white',
   },
-  menuGrid: {
+  welcomeSection: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 8,
-    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  menuItem: {
-    width: '48%',
+  welcomeText: {
+    marginLeft: 16,
+  },
+  section: {
+    marginHorizontal: 16,
+    marginTop: 24,
+  },
+  lastSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
     marginBottom: 16,
   },
-  menuContent: {
+  quickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionCard: {
+    width: '48%',
+    marginBottom: 16,
+    borderRadius: 12,
+  },
+  actionContent: {
     alignItems: 'center',
     padding: 16,
   },
-  menuTitle: {
-    fontSize: 16,
-    marginTop: 8,
+  actionIcon: {
+    marginBottom: 8,
+  },
+  actionTitle: {
+    fontSize: 14,
     textAlign: 'center',
   },
-  menuDescription: {
+  activityCard: {
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  activity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  activityDetails: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  activityTitle: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  activityTime: {
     fontSize: 12,
-    textAlign: 'center',
-    marginTop: 4,
+    color: '#757575',
+  },
+  activityAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  announcementCard: {
+    borderRadius: 12,
+  },
+  announcementTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  announcementTime: {
+    fontSize: 12,
+    color: '#757575',
+    marginBottom: 8,
+  },
+  announcementDesc: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 

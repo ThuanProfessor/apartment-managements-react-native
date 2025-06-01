@@ -3,19 +3,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const API_BASE_URL = 'https://bethuandethuong.pythonanywhere.com';
 
+// Cloudinary configuration for unsigned upload
+export const CLOUDINARY_CONFIG = {
+  cloud_name: 'dg5ts9slf',
+  upload_preset: 'ml_default' // Using unsigned upload preset
+};
+
+export const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloud_name}/image/upload`;
+
 export const API_ENDPOINTS = {
   // Auth endpoints
   LOGIN: '/auth/login/',  // Django AuthViewSet login endpoint
-  CURRENT_USER: '/users/me/',  // Django UserViewSet current-user endpoint
+  CURRENT_USER: '/users/current-user/',  // Django UserViewSet current-user endpoint
   CHANGE_PASSWORD: '/users/change_pass/',  // Django UserViewSet change-pass endpoint
   TOKEN: '/o/token/',  // OAuth2 token endpoint
+  UPLOAD_AVATAR: '/upload-avatar/upload/',  // Upload avatar endpoint
   
   // Bill endpoints
   BILLS: '/bills/',
   BILL_UPLOAD_PROOF: (billId) => `/bills/${billId}/upload_proof/`,
+  PAYMENT_CREATE: '/payment/create/',
   
-  // Complaint endpoints
-  COMPLAINTS: '/complaints/',
+  // Feedback endpoints
+  COMPLAINTS: '/feedbacks/',
   
   // Survey endpoints
   SURVEYS: '/surveys/',
@@ -31,8 +41,24 @@ export const API_ENDPOINTS = {
 
 // OAuth2 configuration
 export const OAUTH_CONFIG = {
-  CLIENT_ID: 'c81OcWdfTtyKMGtnTdDbbmRrmfjARgFGphcvXQwy',
-  CLIENT_SECRET: 'yHyrcPp7LfKC3dI4pfh1A3bopWltJ84gGDRHCDNwsUpnzM2V4hdNB79qoqa5tkNkUPnSTBw4Br1zRFqs3l2LaUdwTQp4tzaDa00l4BUNrJXdlQHXjRBfjYZjioKBxKMX',
+  CLIENT_ID: 'tzPU8V2r7s3pi3pYZzcPo9kEQCMKOc1wk5OJJ9MQ',
+  CLIENT_SECRET: 'OQcDL7aBCtTy6TDWnYkFHyjR3wNfNWpg0PwdMiBb4eFWvusyeblM4RGVotBKf2c8jruepdBnEbkOn3ereACuglZlYwpXgGM6SR5zId0UynIdU4c2wcWVwJSVvnBt4Ank',
+};
+
+// Helper function to encode form data
+export const encodeFormData = (data) => {
+  return Object.keys(data)
+    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    .join('&');
+};
+
+// Helper function to get headers with auth token
+export const getHeaders = (token) => {
+  if (!token) return {};
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/json'
+  };
 };
 
 // Configure axios defaults
@@ -48,7 +74,7 @@ api.interceptors.request.use(
   async config => {
     const token = await AsyncStorage.getItem('access_token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Token ${token}`;
     }
     return config;
   },
@@ -75,28 +101,31 @@ api.interceptors.response.use(
         }
 
         // Request new token
-        const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.TOKEN}`, {
-          grant_type: 'refresh_token',
-          refresh_token: refreshToken,
-          client_id: OAUTH_CONFIG.CLIENT_ID,
-          client_secret: OAUTH_CONFIG.CLIENT_SECRET,
-        });
+        const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.TOKEN}`, 
+          encodeFormData({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+            client_id: OAUTH_CONFIG.CLIENT_ID,
+            client_secret: OAUTH_CONFIG.CLIENT_SECRET,
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          }
+        );
 
         const { access_token } = response.data;
-        
-        // Save new token
         await AsyncStorage.setItem('access_token', access_token);
-        
-        // Update authorization header
-        originalRequest.headers.Authorization = `Bearer ${access_token}`;
-        
-        // Retry original request
+
+        // Update auth header and retry original request
+        originalRequest.headers.Authorization = `Token ${access_token}`;
         return api(originalRequest);
-      } catch (refreshError) {
-        // If refresh fails, clear tokens and redirect to login
-        await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
-        // You might want to trigger navigation to login screen here
-        return Promise.reject(refreshError);
+      } catch (err) {
+        // If refresh fails, redirect to login
+        await AsyncStorage.removeItem('access_token');
+        await AsyncStorage.removeItem('refresh_token');
+        return Promise.reject(error);
       }
     }
 

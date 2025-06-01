@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Image, ScrollView, Clipboard, Platform, StyleSheet, Alert
+  View, Image, ScrollView, Clipboard, Platform, StyleSheet, Alert,
+  TouchableOpacity
 } from 'react-native';
 import { Button, Text, Surface, Portal, Modal, ActivityIndicator, Snackbar } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
@@ -31,7 +32,7 @@ export default function PaymentManualScreen({ route, navigation }) {
         return;
       }
 
-      const remoteUri = Image.resolveAssetSource(require('../assets/images/qr-momo.png')).uri;
+      const remoteUri = Image.resolveAssetSource(require('../../../assets/images/momo-qr.png')).uri;
       const fileUri = FileSystem.documentDirectory + 'qr-momo.png';
       await FileSystem.downloadAsync(remoteUri, fileUri);
       const asset = await MediaLibrary.createAssetAsync(fileUri);
@@ -118,7 +119,7 @@ export default function PaymentManualScreen({ route, navigation }) {
           
           <Surface style={styles.qrContainer}>
             <Image
-              source={require('../../assets/images/momo-qr.png')}
+              source={require('../../../assets/images/momo-qr.png')}
               style={styles.qrImage}
               resizeMode="contain"
             />
@@ -180,6 +181,15 @@ export default function PaymentManualScreen({ route, navigation }) {
               </Button>
             </Surface>
           )}
+          <View style={styles.buttonContainer}>
+            {loading ? (
+              <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 10 }} />
+            ) : (
+              <TouchableOpacity style={styles.sendButton} onPress={uploadProof}>
+                <Text style={styles.sendButtonText}>✅ Gửi ảnh</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </Surface>
       </ScrollView>
 
@@ -191,14 +201,29 @@ export default function PaymentManualScreen({ route, navigation }) {
         {snackbarMessage}
       </Snackbar>
     </View>
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 10 }} />
-      ) : (
-        <TouchableOpacity style={paymentStyles.sendButton} onPress={uploadProof}>
-          <Text style={paymentStyles.sendButtonText}>✅ Gửi ảnh</Text>
-        </TouchableOpacity>
-      )}
-    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 16,
+  },
+  buttonContainer: {
+    padding: 16,
+  },
+  sendButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  sendButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
