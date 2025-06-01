@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Text, Card, Button, ActivityIndicator, Title, Modal } from 'react-native-paper';
 import axios from 'axios';
-import { API_BASE_URL } from '../../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const PaymentScreen = ({ navigation }) => {
@@ -17,9 +18,32 @@ const PaymentScreen = ({ navigation }) => {
 
   const fetchUnpaidBills = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/bills/unpaid/`);
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) {
+        navigation.replace('Login');
+        return;
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}${API_ENDPOINTS.BILLS}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        }
+      );
       console.log('Unpaid bills:', response.data);
-      setUnpaidBills(response.data?.results || response.data || []);
+      const billsData = response.data?.results || response.data || [];
+      if (!Array.isArray(billsData)) {
+        console.error('Bills data is not an array:', billsData);
+        setUnpaidBills([]);
+        return;
+      }
+      
+      // Filter for unpaid bills only
+      const unpaidBillsData = billsData.filter(bill => bill.status === 'pending');
+      setUnpaidBills(unpaidBillsData);
     } catch (error) {
       console.error('Error fetching unpaid bills:', error);
       Alert.alert('Lỗi', 'Không thể tải danh sách hóa đơn');
@@ -41,13 +65,25 @@ const PaymentScreen = ({ navigation }) => {
     }
 
     try {
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) {
+        navigation.replace('Login');
+        return;
+      }
+
       const response = await axios.post(
-        `${API_BASE_URL}/api/payment/create/`,
+        `${API_BASE_URL}${API_ENDPOINTS.PAYMENTS}`,
         {
           bill_id: bill.id,
           payment_method: method,
           language: 'vn',
           bank_code: method === 'vnpay' ? 'ncb' : undefined,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
         }
       );
 
@@ -161,7 +197,7 @@ const PaymentScreen = ({ navigation }) => {
           <Card.Content>
             <Title style={styles.qrTitle}>Quét mã QR MoMo</Title>
             <Image
-              source={require('../../assets/momo-qr.png')}
+              source={require('../../../assets/images/momo-qr.png')}
               style={styles.qrImage}
               resizeMode="contain"
             />

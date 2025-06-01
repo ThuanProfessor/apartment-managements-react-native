@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import PaymentWebView from '../screens/payment/PaymentWebView';
 import PaymentSuccessScreen from '../screens/payment/PaymentSuccessScreen';
-import SurveyScreen from '../screens/main/SurveyScreen';
+import PaymentScreen from '../screens/main/PaymentScreen';
 import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -97,10 +97,10 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen 
-        name="Survey" 
-        component={SurveyScreen}
+        name="Payment" 
+        component={PaymentScreen}
         options={{
-          title: 'Khảo sát'
+          title: 'Thanh toán'
         }}
       />
       <Tab.Screen 

@@ -21,8 +21,9 @@ export const API_ENDPOINTS = {
   
   // Bill endpoints
   BILLS: '/bills/',
+  UNPAID_BILLS: '/bills/unpaid',
   BILL_UPLOAD_PROOF: (billId) => `/bills/${billId}/upload_proof/`,
-  PAYMENT_CREATE: '/payment/create/',
+  PAYMENTS: '/payments/',
   
   // Feedback endpoints
   COMPLAINTS: '/feedbacks/',

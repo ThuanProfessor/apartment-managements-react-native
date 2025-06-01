@@ -3,10 +3,11 @@ import { View, Alert, Text, ActivityIndicator } from "react-native";
 import { Button } from "react-native-paper";
 import { Linking } from 'react-native';
 import axios from 'axios';
-import { API_BASE_URL } from '../../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleSheet } from "react-native";
 
-const PaymentVnpayScreen = ({ route }) => {
+const PaymentVnpayScreen = ({ route, navigation }) => {
     const { billId } = route.params || {};
     const [loading, setLoading] = useState(false);
 
@@ -14,12 +15,24 @@ const PaymentVnpayScreen = ({ route }) => {
         setLoading(true);
         try {
             console.log("Initiating VNPay payment for bill:", billId);
+            const token = await AsyncStorage.getItem('access_token');
+            if (!token) {
+                navigation.replace('Login');
+                return;
+            }
+
             const response = await axios.post(
-                `${API_BASE_URL}/api/payment/create/`,
+                `${API_BASE_URL}${API_ENDPOINTS.PAYMENTS}`,
                 {
                     bill_id: billId,
                     language: "vn",
                     bank_code: "ncb",
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
                 }
             );
             
