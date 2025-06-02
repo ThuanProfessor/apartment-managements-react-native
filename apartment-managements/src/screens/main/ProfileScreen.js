@@ -14,7 +14,11 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
-import { API_BASE_URL, API_ENDPOINTS, getHeaders } from '../../config/api';
+
+// Tạo instance riêng cho Cloudinary không có default headers
+const cloudinaryAxios = axios.create();
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL, API_ENDPOINTS, CLOUDINARY_CONFIG, CLOUDINARY_URL, OAUTH_CONFIG, encodeFormData } from '../../config/api';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, logout, updateProfile } = useAuth();
@@ -46,25 +50,82 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const refreshToken = async () => {
+    try {
+      const refreshToken = await AsyncStorage.getItem('refresh_token');
+      if (!refreshToken) throw new Error('No refresh token found');
+
+      const response = await axios.post(
+        `${API_BASE_URL}${API_ENDPOINTS.TOKEN}`,
+        encodeFormData({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+          client_id: OAUTH_CONFIG.CLIENT_ID,
+          client_secret: OAUTH_CONFIG.CLIENT_SECRET,
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+
+      await AsyncStorage.setItem('access_token', response.data.access_token);
+      return response.data.access_token;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      throw error;
+    }
+  };
+
   const handleAvatarUpdate = async (imageAsset) => {
     try {
       setLoading(true);
-      
-      // Create form data for image upload
+
+      // Create form data for Cloudinary
       const formData = new FormData();
-      formData.append('avatar', {
+      formData.append('file', {
         uri: imageAsset.uri,
         type: 'image/jpeg',
         name: 'avatar.jpg',
       });
+      
+      // Add upload preset for unsigned upload
+      formData.append('upload_preset', 'ml_default');
+      formData.append('cloud_name', 'dxwae3xjj');
 
-      await axios.post(
-        `${API_BASE_URL}${API_ENDPOINTS.UPDATE_AVATAR}`,
+      // Upload to Cloudinary directly
+      console.log('Uploading to Cloudinary...');
+      const cloudinaryResponse = await cloudinaryAxios.post(
+        'https://api.cloudinary.com/v1_1/dxwae3xjj/image/upload',
         formData,
         {
           headers: {
-            ...getHeaders(user?.token),
             'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (!cloudinaryResponse?.data?.secure_url) {
+        throw new Error('Không nhận được URL từ Cloudinary');
+      }
+
+      console.log('Upload lên Cloudinary thành công, URL:', cloudinaryResponse.data.secure_url);
+
+      // Get current access token
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('Không tìm thấy access token');
+      }
+
+      // Update profile with new avatar URL
+      await axios.patch(
+        `${API_BASE_URL}/users/current-user/`,
+        { avatar: cloudinaryResponse.data.secure_url },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
         }
       );
@@ -72,8 +133,15 @@ const ProfileScreen = ({ navigation }) => {
       // Refresh user profile to get updated avatar
       await updateProfile();
     } catch (error) {
-      console.error('Error updating avatar:', error);
-      alert('Failed to update avatar. Please try again.');
+      console.error('Error updating avatar:', {
+        message: error?.message,
+        response: error?.response?.data,
+        status: error?.response?.status
+      });
+      alert(
+        'Failed to update avatar: ' +
+        (error?.response?.data?.detail || error?.message || 'Unknown error')
+      );
     } finally {
       setLoading(false);
     }

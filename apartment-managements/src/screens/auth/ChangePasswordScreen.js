@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { TextInput, Button, Text, Surface, Title } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 
-const ChangePasswordScreen = ({ navigation }) => {
+const ChangePasswordScreen = ({ navigation, route }) => {
+  const isFirstLogin = route.params?.isFirstLogin;
   const { changePassword } = useAuth();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -30,8 +31,16 @@ const ChangePasswordScreen = ({ navigation }) => {
     try {
       setLoading(true);
       setError('');
-      await changePassword(oldPassword, newPassword);
-      navigation.goBack();
+      const result = await changePassword(oldPassword, newPassword);
+      if (result.success) {
+        if (isFirstLogin) {
+          navigation.replace('Home');
+        } else {
+          navigation.goBack();
+        }
+      } else {
+        setError(result.error || 'Failed to change password');
+      }
     } catch (e) {
       setError(e.response?.data?.message || 'Failed to change password');
     } finally {
@@ -40,56 +49,89 @@ const ChangePasswordScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        label="Current Password"
-        value={oldPassword}
-        onChangeText={setOldPassword}
-        secureTextEntry
-        style={styles.input}
-      />
+    <ScrollView style={styles.container}>
+      <Surface style={styles.formContainer} elevation={2}>
+        <Title style={styles.title}>
+          {isFirstLogin ? 'Đổi mật khẩu lần đầu' : 'Đổi mật khẩu'}
+        </Title>
+        
+        {isFirstLogin && (
+          <Text style={styles.description}>
+            Vui lòng đổi mật khẩu để tiếp tục sử dụng hệ thống
+          </Text>
+        )}
 
-      <TextInput
-        label="New Password"
-        value={newPassword}
-        onChangeText={setNewPassword}
-        secureTextEntry
-        style={styles.input}
-      />
+        <TextInput
+          label="Mật khẩu hiện tại"
+          value={oldPassword}
+          onChangeText={setOldPassword}
+          secureTextEntry
+          style={styles.input}
+          mode="outlined"
+          left={<TextInput.Icon icon="lock" />}
+        />
 
-      <TextInput
-        label="Confirm New Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-        style={styles.input}
-      />
+        <TextInput
+          label="Mật khẩu mới"
+          value={newPassword}
+          onChangeText={setNewPassword}
+          secureTextEntry
+          style={styles.input}
+          mode="outlined"
+          left={<TextInput.Icon icon="lock-plus" />}
+        />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+        <TextInput
+          label="Xác nhận mật khẩu mới"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+          style={styles.input}
+          mode="outlined"
+          left={<TextInput.Icon icon="lock-check" />}
+        />
 
-      <Button
-        mode="contained"
-        onPress={handleChangePassword}
-        loading={loading}
-        style={styles.button}
-      >
-        Change Password
-      </Button>
-    </View>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <Button
+          mode="contained"
+          onPress={handleChangePassword}
+          loading={loading}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+        >
+          Xác nhận đổi mật khẩu
+        </Button>
+      </Surface>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  formContainer: {
+    margin: 16,
     padding: 16,
+    borderRadius: 8,
     backgroundColor: '#fff',
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  description: {
+    textAlign: 'center',
+    marginBottom: 24,
+    color: '#666',
   },
   input: {
     marginBottom: 16,
   },
   button: {
-    marginTop: 8,
+    marginTop: 24,
   },
   error: {
     color: 'red',

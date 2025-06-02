@@ -10,19 +10,21 @@ import {
   Modal,
   FAB,
   Chip,
+  Paragraph,
 } from 'react-native-paper';
 import axios from 'axios';
-import { API_BASE_URL, API_ENDPOINTS, getHeaders } from '../../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 
 const ComplaintsScreen = () => {
   const { user } = useAuth();
-  const [complaints, setComplaints] = useState([]);
+  const [complaints, setComplaints] = useState([]);  // Initialize as empty array
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
+    content: '',
     category: '',
   });
 
@@ -33,13 +35,26 @@ const ComplaintsScreen = () => {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`,
-        { headers: getHeaders(user?.token) }
-      );
-      setComplaints(response.data);
+      console.log('Fetching complaints from:', `${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`);
+      
+      const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`);
+      console.log('API Response:', response.data);
+      
+      // Ensure we have an array, even if the API returns null/undefined
+      const complaintsData = response.data?.results || response.data || [];
+      console.log('Processed complaints data:', complaintsData);
+      
+      if (!Array.isArray(complaintsData)) {
+        console.error('Complaints data is not an array:', complaintsData);
+        setComplaints([]);
+        return;
+      }
+      
+      setComplaints(complaintsData);
     } catch (error) {
       console.error('Error fetching complaints:', error);
+      console.error('Error details:', error.response?.data || 'No response data');
+      setComplaints([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
@@ -47,21 +62,45 @@ const ComplaintsScreen = () => {
 
   const handleSubmit = async () => {
     try {
+      if (!formData.title || !formData.content || !formData.category) {
+        alert('Please fill in all fields');
+        return;
+      }
+
       setLoading(true);
-      await axios.post(
+      console.log('Submitting complaint with data:', formData);
+
+      // Convert data to FormData
+      const formDataObj = new FormData();
+      formDataObj.append('title', formData.title);
+      formDataObj.append('content', formData.content);
+      formDataObj.append('category', formData.category);
+
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      };
+
+      const response = await axios.post(
         `${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`,
-        formData,
-        { headers: getHeaders(user?.token) }
+        formDataObj,
+        config
       );
+
+      console.log('Submit response:', response.data);
+      
       setVisible(false);
       fetchComplaints();
       setFormData({
         title: '',
-        description: '',
+        content: '',
         category: '',
       });
     } catch (error) {
       console.error('Error submitting complaint:', error);
+      console.error('Error details:', error.response?.data || 'No response data');
+      alert('Failed to submit complaint. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -105,9 +144,9 @@ const ComplaintsScreen = () => {
         />
         
         <TextInput
-          label="Description"
-          value={formData.description}
-          onChangeText={(text) => setFormData({ ...formData, description: text })}
+          label="Content"
+          value={formData.content}
+          onChangeText={(text) => setFormData({ ...formData, content: text })}
           multiline
           numberOfLines={4}
           style={styles.input}
@@ -148,7 +187,8 @@ const ComplaintsScreen = () => {
         </Card>
 
         <View style={styles.complaintsList}>
-          {complaints.map((complaint, index) => (
+          {Array.isArray(complaints) && complaints.length > 0 ? (
+            complaints.map((complaint, index) => (
             <Card key={index} style={styles.complaintCard}>
               <Card.Content>
                 <View style={styles.headerRow}>
@@ -190,7 +230,13 @@ const ComplaintsScreen = () => {
                 />
               </Card.Content>
             </Card>
-          ))}
+          ))) : (
+            <Card style={styles.complaintCard}>
+              <Card.Content>
+                <Title>No complaints yet</Title>
+              </Card.Content>
+            </Card>
+          )}
         </View>
       </ScrollView>
 

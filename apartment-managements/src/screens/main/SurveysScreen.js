@@ -16,7 +16,7 @@ import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS, getHeaders } from '../../config/api';
 import { useAuth } from '../../context/AuthContext';
 
-const SurveysScreen = () => {
+const SurveysScreen = ({ navigation }) => {
   const { user } = useAuth();
   const [surveys, setSurveys] = useState([]);
   const [visible, setVisible] = useState(false);
@@ -44,9 +44,7 @@ const SurveysScreen = () => {
   };
 
   const handleSurveyOpen = (survey) => {
-    setSelectedSurvey(survey);
-    setResponses({});
-    setVisible(true);
+    navigation.navigate('Survey', { surveyId: survey.id });
   };
 
   const handleSubmitSurvey = async () => {
