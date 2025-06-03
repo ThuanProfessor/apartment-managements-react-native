@@ -12,6 +12,7 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import InitialSetupScreen from './src/screens/auth/InitialSetupScreen';
 
 // Navigators
+import AppNavigator from './src/navigation/AppNavigator';
 import MainNavigator from './src/navigation/MainNavigator';
 
 // Components

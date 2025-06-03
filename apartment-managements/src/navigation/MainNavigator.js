@@ -17,6 +17,7 @@ import ProfileScreen from '../screens/main/ProfileScreen';
 import ApartmentManagementScreen from '../screens/admin/ApartmentManagementScreen';
 import ResidentAccountsScreen from '../screens/admin/ResidentAccountsScreen';
 import SurveyManagementScreen from '../screens/admin/SurveyManagementScreen';
+import LockerScreen from '../screens/main/LockerScreen';
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -45,6 +46,9 @@ const TabNavigator = () => {
               break;
             case 'Profile':
               iconName = focused ? 'account' : 'account-outline';
+              break;
+            case 'LockerScreen':
+              iconName = focused ? 'package-variant' : 'package-variant-closed'; // Thay đổi icon này
               break;
           }
 
@@ -108,6 +112,14 @@ const TabNavigator = () => {
         component={ProfileScreen}
         options={{
           title: 'Tài khoản'
+        }}
+      />
+      <Tab.Screen 
+        name="LockerScreen" 
+        component={LockerScreen}
+        options={{
+          title: 'Tủ đồ',
+          headerShown: true
         }}
       />
 

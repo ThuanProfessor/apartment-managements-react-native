@@ -33,19 +33,11 @@ const PaymentScreen = ({ navigation }) => {
           }
         }
       );
-      console.log('Unpaid bills:', response.data);
+
       const billsData = response.data?.results || response.data || [];
-      if (!Array.isArray(billsData)) {
-        console.error('Bills data is not an array:', billsData);
-        setUnpaidBills([]);
-        return;
-      }
-      
-      // Filter for unpaid bills only
       const unpaidBillsData = billsData.filter(bill => bill.status === 'pending');
       setUnpaidBills(unpaidBillsData);
     } catch (error) {
-      console.error('Error fetching unpaid bills:', error);
       Alert.alert('Lỗi', 'Không thể tải danh sách hóa đơn');
     } finally {
       setLoading(false);
@@ -57,14 +49,14 @@ const PaymentScreen = ({ navigation }) => {
   };
 
   const handlePayment = async (bill, method) => {
-    console.log(`Initiating payment with method: ${method}`);
-    
-    if (!bill?.id) {
-      Alert.alert('Lỗi', 'Vui lòng chọn hóa đơn cần thanh toán');
-      return;
-    }
-
     try {
+      if (method === 'momo') {
+        // Show QR code for MoMo
+        setSelectedBill(bill);
+        setShowQRModal(true);
+        return;
+      }
+
       const token = await AsyncStorage.getItem('access_token');
       if (!token) {
         navigation.replace('Login');
@@ -92,10 +84,6 @@ const PaymentScreen = ({ navigation }) => {
           url: response.data.payment_url,
           billId: bill.id
         });
-      } else if (method === 'momo') {
-        // Show QR code for MoMo
-        setSelectedBill(bill);
-        setShowQRModal(true);
       } else {
         throw new Error('Không nhận được URL thanh toán');
       }
@@ -130,55 +118,35 @@ const PaymentScreen = ({ navigation }) => {
       ) : (
         <ScrollView style={styles.scrollView}>
           {unpaidBills.map((bill) => (
-            <Card
-              key={bill.id}
-              style={styles.billCard}
-              onPress={() => handleSelectBill(bill)}
-            >
+            <Card key={bill.id} style={styles.billCard}>
               <Card.Content>
                 <View style={styles.billHeader}>
-                  <MaterialCommunityIcons 
-                    name="file-document-outline" 
-                    size={24} 
-                    color="#2196F3" 
-                  />
-                  <Title style={styles.billTitle}>
-                    {bill.title || `Hóa đơn #${bill.id}`}
-                  </Title>
+                  <MaterialCommunityIcons name="file-document-outline" size={24} color="#2196F3" />
+                  <View style={styles.billInfo}>
+                    <Title style={styles.billTitle}>{bill.title || `Hóa đơn #${bill.id}`}</Title>
+                    <Text style={styles.amount}>{bill.amount?.toLocaleString('vi-VN')} VNĐ</Text>
+                    {bill.due_date && (
+                      <Text style={styles.dueDate}>
+                        Hạn thanh toán: {new Date(bill.due_date).toLocaleDateString('vi-VN')}
+                      </Text>
+                    )}
+                  </View>
                 </View>
-                
-                <Text style={styles.amount}>
-                  {bill.amount?.toLocaleString('vi-VN')} VNĐ
-                </Text>
-                
-                {bill.due_date && (
-                  <Text style={styles.dueDate}>
-                    Hạn thanh toán: {new Date(bill.due_date).toLocaleDateString('vi-VN')}
-                  </Text>
-                )}
 
                 <View style={styles.paymentMethods}>
                   <TouchableOpacity 
-                    style={styles.methodButton}
+                    style={[styles.methodButton, styles.momoButton]}
                     onPress={() => handlePayment(bill, 'momo')}
                   >
-                    <MaterialCommunityIcons 
-                      name="qrcode-scan" 
-                      size={32} 
-                      color="#A50064" 
-                    />
+                    <MaterialCommunityIcons name="qrcode-scan" size={32} color="#FFFFFF" />
                     <Text style={styles.methodText}>MoMo</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity 
-                    style={styles.methodButton}
+                    style={[styles.methodButton, styles.vnpayButton]}
                     onPress={() => handlePayment(bill, 'vnpay')}
                   >
-                    <MaterialCommunityIcons 
-                      name="credit-card" 
-                      size={32} 
-                      color="#004A9C" 
-                    />
+                    <MaterialCommunityIcons name="credit-card" size={32} color="#FFFFFF" />
                     <Text style={styles.methodText}>VNPay</Text>
                   </TouchableOpacity>
                 </View>
@@ -207,15 +175,17 @@ const PaymentScreen = ({ navigation }) => {
             <Text style={styles.qrAmount}>
               Số tiền: {selectedBill?.amount?.toLocaleString('vi-VN')} VNĐ
             </Text>
+            <Text style={styles.accountDetails}>
+              <Text style={styles.label}>Chủ tài khoản: </Text>DANG THE DANH{'\n'}
+              <Text style={styles.label}>Số điện thoại: </Text>0983414384{'\n'}
+              <Text style={styles.label}>Nội dung: </Text>BILL{selectedBill?.id}
+            </Text>
             <Button
               mode="contained"
-              onPress={() => {
-                setShowQRModal(false);
-                navigation.navigate('PaymentSuccess', { billId: selectedBill?.id });
-              }}
+              onPress={() => setShowQRModal(false)}
               style={styles.confirmButton}
             >
-              Xác nhận đã thanh toán
+              Đóng
             </Button>
           </Card.Content>
         </Card>
@@ -228,6 +198,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    paddingHorizontal: 16,
   },
   center: {
     flex: 1,
@@ -237,55 +208,67 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    margin: 16,
+    marginVertical: 16,
     color: '#1976D2',
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
-    padding: 16,
   },
   billCard: {
     marginBottom: 16,
+    borderRadius: 8,
     elevation: 2,
+    backgroundColor: '#FFFFFF',
   },
   billHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
+  billInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
   billTitle: {
-    marginLeft: 8,
     fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
   amount: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#1976D2',
-    marginBottom: 8,
+    marginTop: 4,
   },
   dueDate: {
+    fontSize: 14,
     color: '#666',
-    marginBottom: 16,
+    marginTop: 4,
   },
   paymentMethods: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
   },
   methodButton: {
+    flex: 1,
     alignItems: 'center',
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f5f5f5',
-    minWidth: 100,
+    marginHorizontal: 8,
+  },
+  momoButton: {
+    backgroundColor: '#A50064',
+  },
+  vnpayButton: {
+    backgroundColor: '#004A9C',
   },
   methodText: {
     marginTop: 8,
-    color: '#666',
+    fontSize: 14,
     fontWeight: '600',
+    color: '#FFFFFF',
   },
   modalContainer: {
     padding: 20,
@@ -331,6 +314,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  accountDetails: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+  },
+  label: {
+    fontWeight: 'bold',
   },
 });
 

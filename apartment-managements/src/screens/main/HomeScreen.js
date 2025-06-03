@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Surface, Text, Title, Card, Avatar, useTheme, IconButton } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -11,7 +11,6 @@ const HomeScreen = ({ navigation }) => {
   const quickActions = [
     { title: 'Thanh Toán', icon: 'credit-card-outline', color: '#4CAF50', route: 'Payments' },
     { title: 'Phản Ánh', icon: 'message-badge-outline', color: '#F44336', route: 'Complaints' },
-    { title: 'Tủ Đồ', icon: 'locker-multiple', color: '#2196F3', route: 'Locker' },
     { title: 'Khảo Sát', icon: 'clipboard-text-outline', color: '#FF9800', route: 'Surveys' },
   ];
 
@@ -49,6 +48,14 @@ const HomeScreen = ({ navigation }) => {
               </Card.Content>
             </Card>
           ))}
+          {/* Direct Locker Navigation */}
+          <TouchableOpacity
+            style={styles.quickAction}
+            onPress={() => navigation.navigate('LockerScreen')} // Thay đổi 'Locker' thành 'LockerScreen'
+          >
+            <MaterialCommunityIcons name="locker" size={32} color="#2196F3" />
+            <Text style={styles.quickActionText}>Tủ Đồ</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -146,6 +153,16 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  quickAction: {
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  quickActionText: {
+    marginTop: 4,
+    fontSize: 14,
+    color: '#2196F3',
   },
   activityCard: {
     borderRadius: 12,

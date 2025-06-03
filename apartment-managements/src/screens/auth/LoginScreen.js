@@ -4,6 +4,8 @@ import { TextInput, Button, Title, Text, Surface, useTheme } from 'react-native-
 import { useAuth } from '../../context/AuthContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api, { API_ENDPOINTS } from '../../config/api'; // Fix import path
 
 const LoginScreen = () => {
   const { login, error: authError, setError } = useAuth();
@@ -23,13 +25,42 @@ const LoginScreen = () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await login(username, password);
-      console.log('Login result:', result);
+      console.log('Logging in with:', { username, password });
       
-      // Login success - navigation will be handled by App.js based on isFirstLogin state
-      // No need to navigate here as the AuthContext state change will trigger App.js navigation
+      const formData = new URLSearchParams();
+      formData.append('grant_type', 'password');
+      formData.append('username', username);
+      formData.append('password', password);
+      formData.append('client_id', OAUTH_CONFIG.CLIENT_ID);
+      formData.append('client_secret', OAUTH_CONFIG.CLIENT_SECRET);
+
+      const response = await axios.post(
+        `${API_BASE_URL}${API_ENDPOINTS.TOKEN}`,
+        formData.toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+
+      console.log('Login response:', response.data);
+
+      if (response.data.access_token) {
+        // Lưu token khi đăng nhập thành công
+        await AsyncStorage.setItem('access_token', response.data.access_token);
+        await AsyncStorage.setItem('refresh_token', response.data.refresh_token);
+        
+        // Get user details after token
+        const userResponse = await api.get(API_ENDPOINTS.CURRENT_USER);
+        await AsyncStorage.setItem('user', JSON.stringify(userResponse.data));
+        
+        login(userResponse.data);
+        // Điều hướng đến màn hình chính
+        navigation.replace('MainApp');
+      }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', error.response?.data || error.message);
       const errorMessage = error?.response?.data?.detail || 
                           error?.response?.data?.error_description || 
                           'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';

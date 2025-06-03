@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_BASE_URL = 'https://bethuandethuong.pythonanywhere.com';
+export const API_BASE_URL = 'https://7006-118-68-25-55.ngrok-free.app'; // Cập nhật URL ngrok mới
 
 // Cloudinary configuration for unsigned upload
 export const CLOUDINARY_CONFIG = {
@@ -36,14 +36,14 @@ export const API_ENDPOINTS = {
   PARKING_CARDS: '/parking-cards/',
   
   // Locker endpoints
-  LOCKERS: '/lockers/',
-  LOCKER_BOOKINGS: '/locker-bookings/',
+  LOCKERS: (userId) => `/api/apartment/users/${userId}/lockers/`,
+  LOCKER_DETAIL: (userId, lockerId) => `/api/apartment/users/${userId}/lockers/${lockerId}/`,
 };
 
 // OAuth2 configuration
 export const OAUTH_CONFIG = {
-  CLIENT_ID: 'tzPU8V2r7s3pi3pYZzcPo9kEQCMKOc1wk5OJJ9MQ',
-  CLIENT_SECRET: 'OQcDL7aBCtTy6TDWnYkFHyjR3wNfNWpg0PwdMiBb4eFWvusyeblM4RGVotBKf2c8jruepdBnEbkOn3ereACuglZlYwpXgGM6SR5zId0UynIdU4c2wcWVwJSVvnBt4Ank',
+  CLIENT_ID: 'PZFzK1dtx7zrnoPCbJzxFZTJzSeG06tPf1nbl20f',
+  CLIENT_SECRET: 'weMx3lDBNBcVgTHPQvlKlOy0bYpieeTBjDXVJBN8NfWXPVMFSv2Z8bRGd96aVqz0zTcGHhvh4vt9YZblo6pab9jxhgXI0hGn3R0yDngHEYB84c4I6rIThdVWBfO5niwO',
 };
 
 // Helper function to encode form data
@@ -75,7 +75,7 @@ api.interceptors.request.use(
   async config => {
     const token = await AsyncStorage.getItem('access_token');
     if (token) {
-      config.headers.Authorization = `Token ${token}`;
+      config.headers.Authorization = `Bearer ${token}`; // Changed from Token to Bearer
     }
     return config;
   },
@@ -130,6 +130,28 @@ api.interceptors.response.use(
       }
     }
 
+    return Promise.reject(error);
+  }
+);
+
+// Thêm config cho axios
+axios.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data
+    });
     return Promise.reject(error);
   }
 );

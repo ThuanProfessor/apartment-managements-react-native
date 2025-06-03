@@ -9,161 +9,171 @@ import {
     StyleSheet,
     TouchableOpacity,
     SafeAreaView,
+    RefreshControl,
 } from "react-native";
-import api from "../../config/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import styles from "../../styles/LokerScreensStyles";
+import api, { API_ENDPOINTS } from '../../config/api';
+import { useAuth } from '../../context/AuthContext';
+import { Card, Title, Button } from "react-native-paper";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LockerScreen = () => {
-    const [lockers, setLockers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState("all");
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 7;
+  const { user } = useAuth();
+  const [lockers, setLockers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-    const fetchLockers = async () => {
-        setLoading(true);
+  useEffect(() => {
+    fetchLockers();
+  }, []);
+
+  const fetchLockers = async () => {
+    if (!user?.id) {
+      console.log('No user ID found');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      console.log('Using token:', token);
+      
+      const response = await api.get(API_ENDPOINTS.LOCKERS(user.id), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Lockers response:', response.data);
+      setLockers(response.data);
+    } catch (error) {
+      console.error('Error fetching lockers:', error.response?.data);
+      Alert.alert('Lỗi', 'Không thể tải danh sách tủ đồ');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+    const handleReceived = async (lockerId) => {
         try {
-            const token = await AsyncStorage.getItem("access_token");
-            const res = await api.get(API_ENDPOINTS.LOCKERS, {
-                headers: { Authorization: `Bearer ${token}` },
+            if (!user || !user.id) {
+                throw new Error('User not authenticated');
+            }
+
+            await api.patch(API_ENDPOINTS.LOCKER_DETAIL(user.id, lockerId), {
+                status: 'received'
             });
-            setLockers(res.data);
-        } catch (err) {
-            Alert.alert("Lỗi", "Không thể tải danh sách tủ đồ.");
-        } finally {
-            setLoading(false);
+            
+            fetchLockers(); // Refresh list after update
+            Alert.alert('Thành công', 'Đã cập nhật trạng thái nhận đồ');
+        } catch (error) {
+            console.error('Error updating locker:', error);
+            Alert.alert('Lỗi', 'Không thể cập nhật trạng thái');
         }
     };
 
-    useEffect(() => {
-        fetchLockers();
-    }, []);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [filter]);
-
-    const filteredLockers = lockers.filter((item) => {
-        if (filter === "received") return item.status === "received";
-        if (filter === "pending") return item.status !== "received";
-        return true;
-    });
-
-    const totalPages = Math.ceil(filteredLockers.length / itemsPerPage);
-
-    const paginatedLockers = filteredLockers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
-
-    const renderItem = ({ item }) => (
-        <View style={styles.lockerCard}>
-            {item.image && (
-                <Image source={{ uri: item.image }} style={styles.image} />
-            )}
-            <View style={styles.infoContainer}>
-                <Text style={styles.description}>{item.item_description}</Text>
-                <Text style={styles.date}>
-                    🗓 Ngày tạo: {new Date(item.created_date).toLocaleDateString()}
-                </Text>
-
-                {item.received_at && (
-                    <Text style={styles.date}>
-                        ✅ Nhận lúc: {new Date(item.received_at).toLocaleDateString()}
-                    </Text>
-                )}
-
-                <Text
-                    style={[
-                        styles.status,
-                        item.status === "received" ? styles.received : styles.pending,
-                    ]}
-                >
-                    {item.status === "received" ? "Đã nhận" : "Chờ nhận"}
-                </Text>
-            </View>
-        </View>
-    );
-
     if (loading)
-        return <ActivityIndicator size="large" style={{ marginTop: 40 }} />;
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color="#2196F3" />
+                <Text>Đang tải...</Text>
+            </View>
+        );
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>🧳 Tủ đồ của bạn</Text>
+            {lockers.length === 0 ? (
+                <Text style={styles.emptyText}>Không có món đồ nào trong tủ</Text>
+            ) : (
+                <FlatList
+                    data={lockers}
+                    keyExtractor={(item) => item.id.toString()}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={fetchLockers} />
+                    }
+                    renderItem={({ item }) => (
+                        <Card key={item.id} style={styles.card}>
+                            <Card.Content>
+                                <Title style={styles.itemTitle}>{item.item_description}</Title>
+                                <Text style={styles.itemTrackingCode}>Mã theo dõi: {item.tracking_code}</Text>
+                                <Text style={styles.itemStatus}>
+                                    Trạng thái: {item.status === "pending" ? "Chờ nhận" : "Đã nhận"}
+                                </Text>
+                                <Text style={styles.itemTimestamp}>
+                                    Thời gian: {new Date(item.created_date).toLocaleDateString("vi-VN")}
+                                </Text>
 
-            <View style={styles.filterContainer}>
-                {["all", "received", "pending"].map((type) => (
-                    <TouchableOpacity
-                        key={type}
-                        onPress={() => setFilter(type)}
-                        style={[
-                            styles.filterButton,
-                            filter === type && styles.filterButtonActive,
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.filterText,
-                                filter === type && styles.filterTextActive,
-                            ]}
-                        >
-                            {type === "all"
-                                ? "Tất cả"
-                                : type === "received"
-                                ? "Đã nhận"
-                                : "Chờ nhận"}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <FlatList
-                data={paginatedLockers}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={renderItem}
-                ListEmptyComponent={
-                    <Text style={styles.empty}>
-                        Không có món hàng nào trong tủ đồ.
-                    </Text>
-                }
-                contentContainerStyle={{ paddingBottom: 20 }}
-            />
-
-            {totalPages > 1 && (
-                <View style={styles.pagination}>
-                    <TouchableOpacity
-                        onPress={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                        disabled={currentPage === 1}
-                        style={[
-                            styles.pageButton,
-                            currentPage === 1 && styles.pageButtonDisabled,
-                        ]}
-                    >
-                        <Text style={styles.pageText}>◀</Text>
-                    </TouchableOpacity>
-
-                    <Text style={styles.pageIndicator}>
-                        Trang {currentPage} / {totalPages}
-                    </Text>
-
-                    <TouchableOpacity
-                        onPress={() =>
-                            setCurrentPage((p) => Math.min(p + 1, totalPages))
-                        }
-                        disabled={currentPage === totalPages}
-                        style={[
-                            styles.pageButton,
-                            currentPage === totalPages && styles.pageButtonDisabled,
-                        ]}
-                    >
-                        <Text style={styles.pageText}>▶</Text>
-                    </TouchableOpacity>
-                </View>
+                                {item.status === "pending" && (
+                                    <Button
+                                        mode="contained"
+                                        onPress={() => handleReceived(item.id)}
+                                        style={styles.button}
+                                    >
+                                        Xác nhận đã nhận
+                                    </Button>
+                                )}
+                            </Card.Content>
+                        </Card>
+                    )}
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                />
             )}
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: "#f5f5f5",
+    },
+    center: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        marginBottom: 16,
+        color: "#1976D2",
+        textAlign: "center",
+    },
+    card: {
+        marginBottom: 16,
+        elevation: 2,
+        backgroundColor: "#fff",
+    },
+    emptyText: {
+        textAlign: "center",
+        fontSize: 16,
+        color: "#666",
+        marginTop: 24,
+    },
+    itemTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#333",
+    },
+    itemTrackingCode: {
+        fontSize: 14,
+        color: "#666",
+        marginVertical: 4,
+    },
+    itemStatus: {
+        fontSize: 14,
+        color: "#666",
+        marginVertical: 4,
+    },
+    itemTimestamp: {
+        fontSize: 12,
+        color: "#999",
+    },
+    button: {
+        marginTop: 12,
+    },
+});
 
 export default LockerScreen;

@@ -6,42 +6,59 @@ import MyContext from "../../config/MyContext"; // Context dùng useContext
 import qs from "qs";
 import { endAsyncEvent, endEvent } from "react-native/Libraries/Performance/Systrace";
 
-import api, { API_ENDPOINTS } from "../../config/api";
+import api, { API_ENDPOINTS, OAUTH_CONFIG } from "../../config/api";
 const Login = ({ navigation }) => {
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
   const { dispatch } = useContext(MyContext);
 
- const login = async () => {
+const login = async () => {
   try {
-    console.log("Login function called");
-    console.log("Username:", username);     
-    console.log("Password:", password);
-    const res = await API.post(
-      endpoints['login'],
-      qs.stringify({
-        'username': username,
-        'password': password,
-        'grant_type': "password",
-        'client_id': "aPwlnbB1gdvRBos9vtEatNVEQWx8wMA4jbzAQKCc",
-        'client_secret': "6UK1kV2eeBuG788EOTJfgnBJVrPyZL2PO7LqarE08YPKRHa7zNNK2DHZbr5aL6LkywQNd0isjCM6FmMjxCZdoc10DFezBkwqgXDpDzvFJKXXg4V3avGJwgfAhHP1Rt3y",
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
+    console.log("Đang thử đăng nhập với tài khoản:", { username });
+    
+    const loginUrl = `${API_ENDPOINTS.TOKEN}`;
+    console.log("URL đăng nhập:", loginUrl);
+    
+    const loginData = {
+      username: username,
+      password: password,
+      grant_type: "password",
+      client_id: OAUTH_CONFIG.CLIENT_ID,
+      client_secret: OAUTH_CONFIG.CLIENT_SECRET,
+    };
+    
+    console.log("Dữ liệu gửi đi:", qs.stringify(loginData));
+    
+    const res = await api.post(loginUrl, qs.stringify(loginData), {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+
+    console.log("Login response:", res.data);
+    
     const token = res.data.access_token;
     await AsyncStorage.setItem("access_token", token);
 
     // Gọi user info
-    const userRes = await authAPI(token).get(endpoints["current-user"]);
-    dispatch({ type: "login", payload: { username: userRes.data } });
+    const userRes = await api.get(API_ENDPOINTS.CURRENT_USER, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  } catch (ex) {
-   
-    console.error(ex);
+    dispatch({ type: "login", payload: { user: userRes.data } });
+    console.log("Login success!");
+    
+    // Navigate to home screen
+    navigation.replace("Home");
+
+  } catch (error) {
+    console.log("Login error details:", error.response || error);
+    console.log("Login result:", {
+      error: "Login failed. Please try again.",
+      success: false,
+    });
   }
 };
 
