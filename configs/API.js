@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Tạo một instance API gốc
 const API = axios.create({
-  baseURL: 'https://4151-2001-ee0-4fc1-cd40-dd5c-e1a6-23a2-36a2.ngrok-free.app'
+  baseURL: 'https://1727-14-169-164-62.ngrok-free.app'
 });
 
 // Định nghĩa các endpoint

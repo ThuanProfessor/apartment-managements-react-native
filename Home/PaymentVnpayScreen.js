@@ -4,7 +4,7 @@ import { View, Button, Alert, Text, ActivityIndicator } from "react-native";
 import { Linking } from 'react-native';
 import api from "../configs/API";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import styles from './styles';
+
 const PaymentVnpayScreen = ({ route }) => {
     const { billId } = route.params || {};
     const [loading, setLoading] = useState(false);
