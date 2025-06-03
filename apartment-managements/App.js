@@ -14,6 +14,7 @@ import InitialSetupScreen from './src/screens/auth/InitialSetupScreen';
 // Navigators
 import AppNavigator from './src/navigation/AppNavigator';
 import MainNavigator from './src/navigation/MainNavigator';
+import TabNavigator from './src/navigation/MainNavigator'; // Import TabNavigator
 
 // Components
 import LoadingOverlay from './src/components/LoadingOverlay';
@@ -69,6 +70,14 @@ const AppContent = () => {
           }}
         />
       )}
+      <Stack.Screen // Thêm TabNavigator vào đây
+          name="TabNavigator"
+          component={TabNavigator}
+          options={{
+            gestureEnabled: false,
+            animation: 'fade'
+          }}
+        />
     </Stack.Navigator>
   );
 };

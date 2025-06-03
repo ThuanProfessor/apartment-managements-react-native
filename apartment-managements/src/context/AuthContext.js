@@ -16,14 +16,14 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      console.log('Đang thử đăng nhập với tài khoản:', { username });
-      
+      console.log('Đang thử đăng nhập với tài khoản:', { username, password });
+
       // Tạo request body
       const requestBody = `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&client_id=${OAUTH_CONFIG.CLIENT_ID}&client_secret=${OAUTH_CONFIG.CLIENT_SECRET}`;
-      
+
       console.log('URL đăng nhập:', `${API_BASE_URL}/o/token/`);
       console.log('Dữ liệu gửi đi:', requestBody);
-      
+
       try {
         // Gửi request đăng nhập
         const tokenResponse = await axios.post(
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
             }
           }
         );
-        
+
         console.log('Phản hồi từ server:', tokenResponse.data);
 
         if (!tokenResponse.data.access_token) {
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
         const { access_token, refresh_token } = tokenResponse.data;
         await AsyncStorage.setItem('access_token', access_token);
         await AsyncStorage.setItem('refresh_token', refresh_token);
-        
+
         // Cập nhật token cho tất cả request
         axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
         axios.defaults.headers.common['Accept'] = 'application/json';
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
         // Lấy thông tin user
         console.log('Đang lấy thông tin user...');
         console.log('URL lấy thông tin:', `${API_BASE_URL}${API_ENDPOINTS.CURRENT_USER}`);
-        
+
         try {
           const userResponse = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.CURRENT_USER}`, {
             headers: {
@@ -69,12 +69,12 @@ export const AuthProvider = ({ children }) => {
             token: access_token
           };
           setUser(userData);
-          
+
           // Kiểm tra is_first_login từ response
           const isFirstLogin = userData.is_first_login === true;
           setIsFirstLogin(isFirstLogin);
           console.log('First login status:', isFirstLogin);
-          
+
           return {
             success: true,
             isFirstLogin: isFirstLogin,
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
             data: userError.response?.data,
             url: `${API_BASE_URL}${API_ENDPOINTS.CURRENT_USER}`
           });
-          
+
           // Nếu lỗi permission và chưa đổi mật khẩu
           if (userError.response?.status === 403) {
             return {
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }) => {
               }
             };
           }
-          
+
           throw new Error('Không thể lấy thông tin user');
         }
 
@@ -142,12 +142,12 @@ export const AuthProvider = ({ children }) => {
         error_description: error.response?.data?.error_description,
         error_type: error.response?.data?.error
       });
-      
-      const errorMessage = error.response?.data?.error_description || 
-                          error.response?.data?.detail ||
-                          error.response?.data?.error ||
-                          'Login failed. Please try again.';
-      
+
+      const errorMessage = error.response?.data?.error_description ||
+        error.response?.data?.detail ||
+        error.response?.data?.error ||
+        'Login failed. Please try again.';
+
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -188,6 +188,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     await AsyncStorage.removeItem('access_token');
     await AsyncStorage.removeItem('refresh_token');
+    await AsyncStorage.removeItem('user'); // Xóa thông tin user
     setUser(null);
     setIsFirstLogin(false);
   };

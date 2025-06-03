@@ -45,6 +45,19 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }], // Điều hướng về màn hình đăng nhập
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Lỗi', 'Không thể đăng xuất. Vui lòng thử lại.');
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Surface style={styles.profileCard} elevation={4}>
@@ -90,7 +103,7 @@ const ProfileScreen = ({ navigation }) => {
         </Button>
         <Button 
           mode="contained" 
-          onPress={logout} 
+          onPress={handleLogout} // Gọi hàm handleLogout
           style={styles.logoutButton}
         >
           Đăng xuất

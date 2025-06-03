@@ -5,7 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api, { API_ENDPOINTS } from '../../config/api'; // Fix import path
+import axios from 'axios';
+import { OAUTH_CONFIG, API_BASE_URL } from '../../config/api';
 
 const LoginScreen = () => {
   const { login, error: authError, setError } = useAuth();
@@ -22,49 +23,20 @@ const LoginScreen = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-      console.log('Logging in with:', { username, password });
-      
-      const formData = new URLSearchParams();
-      formData.append('grant_type', 'password');
-      formData.append('username', username);
-      formData.append('password', password);
-      formData.append('client_id', OAUTH_CONFIG.CLIENT_ID);
-      formData.append('client_secret', OAUTH_CONFIG.CLIENT_SECRET);
-
-      const response = await axios.post(
-        `${API_BASE_URL}${API_ENDPOINTS.TOKEN}`,
-        formData.toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
-
-      console.log('Login response:', response.data);
-
-      if (response.data.access_token) {
-        // Lưu token khi đăng nhập thành công
-        await AsyncStorage.setItem('access_token', response.data.access_token);
-        await AsyncStorage.setItem('refresh_token', response.data.refresh_token);
-        
-        // Get user details after token
-        const userResponse = await api.get(API_ENDPOINTS.CURRENT_USER);
-        await AsyncStorage.setItem('user', JSON.stringify(userResponse.data));
-        
-        login(userResponse.data);
-        // Điều hướng đến màn hình chính
-        navigation.replace('MainApp');
+      const result = await login(username.trim(), password.trim()); // Truyền username và password từ state
+      if (result.success) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'TabNavigator' }], // Sửa lại thành 'TabNavigator'
+        });
+      } else {
+        setError(result.error || 'Đăng nhập thất bại');
       }
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
-      const errorMessage = error?.response?.data?.detail || 
-                          error?.response?.data?.error_description || 
-                          'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
-      setError(errorMessage);
+      setError(error.response?.data?.error_description || 'Đăng nhập thất bại');
     } finally {
       setLoading(false);
     }

@@ -42,8 +42,8 @@ export const API_ENDPOINTS = {
 
 // OAuth2 configuration
 export const OAUTH_CONFIG = {
-  CLIENT_ID: 'PZFzK1dtx7zrnoPCbJzxFZTJzSeG06tPf1nbl20f',
-  CLIENT_SECRET: 'weMx3lDBNBcVgTHPQvlKlOy0bYpieeTBjDXVJBN8NfWXPVMFSv2Z8bRGd96aVqz0zTcGHhvh4vt9YZblo6pab9jxhgXI0hGn3R0yDngHEYB84c4I6rIThdVWBfO5niwO',
+  CLIENT_ID: '3RmrCK0lxzpRS8E877xpVwfwq3LahldYvHnw3X6x',
+  CLIENT_SECRET: 'Z2kPsxPENT0qo8zUSXTJjhTtplJw3glH98BnB13FcxHOk92AmgRK5BeG0Zk5R6qRs6peFcX4JuS8kOfrlEB1BPCVGf363XALUEMrnx4ppfa0SrdZk0fOf3Vmrm8HAJlH',
 };
 
 // Helper function to encode form data
