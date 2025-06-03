@@ -35,7 +35,13 @@ const HomeScreen = ({ navigation }) => {
             <Card
               key={index}
               style={styles.actionCard}
-              onPress={() => navigation.navigate(action.route)}
+              onPress={() => {
+                if (action.route === 'Surveys') {
+                  navigation.navigate('Surveys'); // Điều hướng trực tiếp đến Surveys
+                } else {
+                  navigation.navigate(action.route);
+                }
+              }}
             >
               <Card.Content style={styles.actionContent}>
                 <IconButton

@@ -18,6 +18,7 @@ import ApartmentManagementScreen from '../screens/admin/ApartmentManagementScree
 import ResidentAccountsScreen from '../screens/admin/ResidentAccountsScreen';
 import SurveyManagementScreen from '../screens/admin/SurveyManagementScreen';
 import LockerScreen from '../screens/main/LockerScreen';
+import SurveysScreen from '../screens/main/SurveysScreen';
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -149,6 +150,17 @@ const MainNavigator = () => {
           title: 'Trang chủ',
           drawerIcon: ({ color }) => (
             <MaterialCommunityIcons name="home" size={24} color={color} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Surveys"
+        component={SurveysScreen}
+        options={{
+          title: 'Khảo sát',
+          headerShown: true,
+          drawerIcon: ({ color }) => (
+            <MaterialCommunityIcons name="clipboard-text" size={24} color={color} />
           ),
         }}
       />

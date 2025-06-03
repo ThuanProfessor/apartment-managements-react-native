@@ -29,7 +29,7 @@ const LoginScreen = () => {
       if (result.success) {
         navigation.reset({
           index: 0,
-          routes: [{ name: 'TabNavigator' }], // Sửa lại thành 'TabNavigator'
+          routes: [{ name: 'Main' }], // Đảm bảo tên route là "Main"
         });
       } else {
         setError(result.error || 'Đăng nhập thất bại');

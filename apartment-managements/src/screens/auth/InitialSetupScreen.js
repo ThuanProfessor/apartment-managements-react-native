@@ -111,7 +111,7 @@ export const InitialSetupScreen = ({ route }) => {
         return true;
       }
 
-      navigation.replace('TabNavigator'); // Sửa lại thành 'TabNavigator'
+      navigation.replace('Main'); // Đảm bảo tên route là "Main"
       return true;
     } catch (error) {
       console.error('Change password error:', error.response?.data);
@@ -161,7 +161,7 @@ export const InitialSetupScreen = ({ route }) => {
 
       console.log('Profile update response:', result?.data);
 
-      navigation.replace('TabNavigator'); // Sửa lại thành 'TabNavigator'
+      navigation.replace('Main'); // Đảm bảo tên route là "Main"
       return true;
     } catch (error) {
       console.error('Avatar upload error details:', {
