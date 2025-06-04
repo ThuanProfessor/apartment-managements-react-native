@@ -14,6 +14,10 @@ import ResidentAccountsScreen from '../screens/admin/ResidentAccountsScreen';
 import SurveyManagementScreen from '../screens/admin/SurveyManagementScreen';
 import ComplaintsScreen from '../screens/main/ComplaintsScreen';
 import SurveysScreen from '../screens/main/SurveysScreen';
+import ParkingCardScreen from '../screens/main/ParkingCardScreen';
+import RelativeCardScreen from '../screens/main/RelativeCardScreen';
+import CardRequestScreen from '../screens/main/CardRequestScreen';
+
 
 const Stack = createStackNavigator();
 
@@ -32,6 +36,8 @@ const MenuButton = ({ navigation }) => {
         <MenuOption onSelect={() => navigation.navigate('MainTabs')} text="Trang chủ" />
         <MenuOption onSelect={() => navigation.navigate('Complaints')} text="Phản ánh" />
         <MenuOption onSelect={() => navigation.navigate('Surveys')} text="Khảo sát" />
+        <MenuOption onSelect={() => navigation.navigate('RelativeCardRequest')} text="Thẻ người thân" />  {/* 👈 Đưa ra ngoài */}
+
         {isAdmin && (
           <>
             <MenuOption onSelect={() => navigation.navigate('ApartmentManagement')} text="Quản lý căn hộ" />
@@ -60,9 +66,16 @@ const MainNavigator = () => {
         <Stack.Screen name="Bill" component={BillsScreen} options={{ title: 'Hóa đơn' }} />
         <Stack.Screen name="Complaints" component={ComplaintsScreen} options={{ title: 'Phản ánh' }} />
         <Stack.Screen name="Surveys" component={SurveysScreen} options={{ title: 'Khảo sát' }} />
+        <Stack.Screen name="ParkingCard" component={ParkingCardScreen} options={{ title: 'Thẻ thân nhân' }} />
+        <Stack.Screen
+  name="RelativeCardRequest"
+  component={CardRequestScreen}
+  options={{ title: 'Đăng ký thẻ người thân' }}
+/>
         <Stack.Screen name="ApartmentManagement" component={ApartmentManagementScreen} options={{ title: 'QL Căn hộ' }} />
         <Stack.Screen name="ResidentAccounts" component={ResidentAccountsScreen} options={{ title: 'QL Tài khoản' }} />
         <Stack.Screen name="SurveyManagement" component={SurveyManagementScreen} options={{ title: 'QL Khảo sát' }} />
+       
       </Stack.Navigator>
     </MenuProvider>
   );
