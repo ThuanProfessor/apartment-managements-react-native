@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 // import PaymentScreen from '../screens/main/PaymentScreen';
 import BillsScreen from '../screens/main/BillListScreen';
 import LockerScreen from '../screens/main/LockerScreen';
+import PaymentManualScreen from '../screens/main/PaymentManualScreen';
+import PaymentVnpayScreen from '../screens/main/PaymentVnpayScreen';
 // Navigators và Screens
 import TabNavigator from './TabNavigator'; // đảm bảo bạn đã export default từ file TabNavigator
 import ApartmentManagementScreen from '../screens/admin/ApartmentManagementScreen';
@@ -60,6 +62,8 @@ const MainNavigator = () => {
         <Stack.Screen name="Bill" component={BillsScreen} options={{ title: 'Hóa đơn' }} />
         <Stack.Screen name="Complaints" component={ComplaintsScreen} options={{ title: 'Phản ánh' }} />
         <Stack.Screen name="Surveys" component={SurveysScreen} options={{ title: 'Khảo sát' }} />
+        <Stack.Screen name="PaymentManual" component={PaymentManualScreen} options={{ title: 'Thanh toán thủ công' }} />
+        <Stack.Screen name="PaymentVnpay" component={PaymentVnpayScreen} options={{ title: 'Thanh toán VNPAY' }} />
         <Stack.Screen name="ApartmentManagement" component={ApartmentManagementScreen} options={{ title: 'QL Căn hộ' }} />
         <Stack.Screen name="ResidentAccounts" component={ResidentAccountsScreen} options={{ title: 'QL Tài khoản' }} />
         <Stack.Screen name="SurveyManagement" component={SurveyManagementScreen} options={{ title: 'QL Khảo sát' }} />
