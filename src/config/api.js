@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_BASE_URL = 'https://1ef1-14-187-11-253.ngrok-free.app';
+export const API_BASE_URL = 'https://d2b4-113-161-52-173.ngrok-free.app';
 
 // Cloudinary configuration for unsigned upload
 export const CLOUDINARY_CONFIG = {
@@ -44,8 +44,8 @@ export const API_ENDPOINTS = {
 
 // OAuth2 configuration
 export const OAUTH_CONFIG = {
-  CLIENT_ID: 'sUchuJ62jEJ2EYS98OOcyk4f07O7ft4TMCbdrdRY',
-  CLIENT_SECRET: 'g7OPMrShvrMhbhG85DNN5PnaN6gUVYVLEPapmVylE1SfRLhevp3G7nwDwSYupRIw44DkVroql67KnvHLg2MlU4F3hux80Jz53PCFpXiaSxNAloCbyBDFRpXDFqq1lCha',
+  CLIENT_ID: '57pSwmS7lxpwvM35aQVZa4yL3YUOjWk4QXCHkwhW',
+  CLIENT_SECRET: '3hGHEuG7YcLw5sZ6Ej5Wt4zd63dc2zsalnHUCThzujaUfT0YvZBzu0LXlvaD1Vic0IGPe19cH7wVhFDcV9XfmT0h07sTCYzC6JO7HYxTHUJXLfEmNpBHImpXmHxSFibt',
 };
 
 // Helper function to encode form data

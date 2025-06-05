@@ -2,24 +2,18 @@ import React from 'react';
 import { View } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import {
-  MenuProvider,
-  Menu,
-  MenuOptions,
-  MenuOption,
-  MenuTrigger,
-} from 'react-native-popup-menu';
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItem,
+} from '@react-navigation/drawer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 
-// Screens
+// Navigators
 import TabNavigator from './TabNavigator';
-import AdminHomeScreen from '../screens/admin/AdminHomeScreen';
-import ApartmentManagementScreen from '../screens/admin/ApartmentManagementScreen';
-import ResidentAccountsScreen from '../screens/admin/ResidentAccountsScreen';
-import SurveyManagementScreen from '../screens/admin/SurveyManagementScreen';
-import ApartmentDetailScreen from '../screens/admin/ApartmentDetailScreen';
 import AdminTabNavigator from './AdminTabNavigator';
 
+// Screens
 import LockerScreen from '../screens/main/LockerScreen';
 import BillsScreen from '../screens/main/BillListScreen';
 import PaymentManualScreen from '../screens/main/PaymentManualScreen';
@@ -27,77 +21,101 @@ import PaymentVnpayScreen from '../screens/main/PaymentVnpayScreen';
 import ComplaintsScreen from '../screens/main/ComplaintsScreen';
 import SurveysScreen from '../screens/main/SurveysScreen';
 import ParkingCardScreen from '../screens/main/ParkingCardScreen';
-import RelativeCardScreen from '../screens/main/RelativeCardScreen';
 import CardRequestScreen from '../screens/main/CardRequestScreen';
+import ProfileScreen from '../screens/main/ProfileScreen';
+
+// Admin
+import ApartmentManagementScreen from '../screens/admin/ApartmentManagementScreen';
+import ResidentAccountsScreen from '../screens/admin/ResidentAccountsScreen';
+import SurveyManagementScreen from '../screens/admin/SurveyManagementScreen';
+import ApartmentDetailScreen from '../screens/admin/ApartmentDetailScreen';
 
 const Stack = createStackNavigator();
+const Drawer = createDrawerNavigator();
 
-const MenuButton = ({ navigation }) => {
-  const { user, logout } = useAuth(); 
-  const isAdmin = user?.role === 'ADMIN';
+// 🔹 Nút mở Drawer (3 gạch)
+const DrawerToggle = ({ navigation }) => (
+  <View style={{ paddingLeft: 15 }}>
+    <MaterialCommunityIcons
+      name="menu"
+      size={24}
+      color="white"
+      onPress={() => navigation.openDrawer()}
+    />
+  </View>
+);
 
-
-  return (
-    <Menu>
-      <MenuTrigger>
-        <View style={{ paddingHorizontal: 15 }}>
-          <MaterialCommunityIcons name="menu" size={24} color="white" />
-        </View>
-      </MenuTrigger>
-      <MenuOptions>
-        <MenuOption onSelect={() => navigation.navigate('MainTabs')} text="Trang chủ" />
-        <MenuOption onSelect={() => navigation.navigate('Complaints')} text="Phản ánh" />
-        <MenuOption onSelect={() => navigation.navigate('Surveys')} text="Khảo sát" />
-        <MenuOption onSelect={() => navigation.navigate('RelativeCardRequest')} text="Thẻ người thân" />
-
-        {isAdmin && (
-          <>
-            <MenuOption onSelect={() => navigation.navigate('ApartmentManagement')} text="Quản lý căn hộ" />
-            <MenuOption onSelect={() => navigation.navigate('ResidentAccounts')} text="Quản lý tài khoản" />
-            <MenuOption onSelect={() => navigation.navigate('SurveyManagement')} text="Quản lý khảo sát" />
-              <MenuOption onSelect={logout} text="Đăng xuất" />
-          </>
-        )}
-      </MenuOptions>
-    </Menu>
-  );
-};
-
-const MainNavigator = () => {
+// 🔹 Stack chính (giữ nguyên logic cũ)
+const MainStack = ({ navigation }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
 
   return (
-   
-      <Stack.Navigator
-        screenOptions={({ navigation }) => ({
-          headerStyle: { backgroundColor: '#6200ee' },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: 'bold' },
-          headerRight: () => <MenuButton navigation={navigation} />,
-        })}
-      >
-        <Stack.Screen
-          name="MainTabs"
-          component={isAdmin ? AdminTabNavigator : TabNavigator}
-          options={{ title: 'Trang chủ' }}
-        />
-        <Stack.Screen name="Locker" component={LockerScreen} options={{ title: 'Tủ Đồ' }} />
-        <Stack.Screen name="Bill" component={BillsScreen} options={{ title: 'Hóa đơn' }} />
-        <Stack.Screen name="Complaints" component={ComplaintsScreen} options={{ title: 'Phản ánh' }} />
-        <Stack.Screen name="Surveys" component={SurveysScreen} options={{ title: 'Khảo sát' }} />
-        <Stack.Screen name="ParkingCard" component={ParkingCardScreen} options={{ title: 'Thẻ gửi xe' }} />
-        <Stack.Screen name="RelativeCardRequest" component={CardRequestScreen} options={{ title: 'Đăng ký thẻ người thân' }} />
-        <Stack.Screen name="PaymentManual" component={PaymentManualScreen} options={{ title: 'Thanh toán thủ công' }} />
-        <Stack.Screen name="PaymentVnpay" component={PaymentVnpayScreen} options={{ title: 'Thanh toán VNPAY' }} />
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: '#6200ee' },
+        headerTintColor: '#fff',
+        headerTitleStyle: { fontWeight: 'bold' },
+        headerLeft: () => <DrawerToggle navigation={navigation} />,
+      }}
+    >
+      <Stack.Screen
+        name="MainTabs"
+        component={isAdmin ? AdminTabNavigator : TabNavigator}
+        options={{ title: 'Trang chủ' }}
+      />
+      <Stack.Screen name="Locker" component={LockerScreen} options={{ title: 'Tủ Đồ' }} />
+      <Stack.Screen name="Bill" component={BillsScreen} options={{ title: 'Hóa đơn' }} />
+      <Stack.Screen name="Complaints" component={ComplaintsScreen} options={{ title: 'Phản ánh' }} />
+      <Stack.Screen name="Surveys" component={SurveysScreen} options={{ title: 'Khảo sát' }} />
+      <Stack.Screen name="ParkingCard" component={ParkingCardScreen} options={{ title: 'Thẻ gửi xe' }} />
+      <Stack.Screen name="RelativeCardRequest" component={CardRequestScreen} options={{ title: 'Đăng ký thẻ người thân' }} />
+      <Stack.Screen name="PaymentManual" component={PaymentManualScreen} options={{ title: 'Thanh toán thủ công' }} />
+      <Stack.Screen name="PaymentVnpay" component={PaymentVnpayScreen} options={{ title: 'Thanh toán VNPAY' }} />
+      <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ sơ cá nhân' }} />
 
-        {/* Admin screens */}
-        <Stack.Screen name="ApartmentManagement" component={ApartmentManagementScreen} options={{ title: 'QL Căn hộ' }} />
-        <Stack.Screen name="ResidentAccounts" component={ResidentAccountsScreen} options={{ title: 'QL Tài khoản' }} />
-        <Stack.Screen name="SurveyManagement" component={SurveyManagementScreen} options={{ title: 'QL Khảo sát' }} />
-        <Stack.Screen name="ApartmentDetail" component={ApartmentDetailScreen} options={{ title: 'Chi tiết căn hộ' }} />
-      </Stack.Navigator>
-    
+      {/* Admin screens */}
+      <Stack.Screen name="ApartmentManagement" component={ApartmentManagementScreen} options={{ title: 'QL Căn hộ' }} />
+      <Stack.Screen name="ResidentAccounts" component={ResidentAccountsScreen} options={{ title: 'QL Tài khoản' }} />
+      <Stack.Screen name="SurveyManagement" component={SurveyManagementScreen} options={{ title: 'QL Khảo sát' }} />
+      <Stack.Screen name="ApartmentDetail" component={ApartmentDetailScreen} options={{ title: 'Chi tiết căn hộ' }} />
+    </Stack.Navigator>
+  );
+};
+
+// 🔹 Drawer content
+const CustomDrawerContent = (props) => {
+  const { logout } = useAuth();
+
+  return (
+    <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
+      <DrawerItem
+        label="🏠 Trang chủ"
+        onPress={() => props.navigation.navigate('MainApp', { screen: 'MainTabs' })}
+      />
+      <DrawerItem
+        label="👤 Hồ sơ"
+        onPress={() => props.navigation.navigate('MainApp', { screen: 'Profile' })}
+      />
+      <DrawerItem
+        label="🔓 Đăng xuất"
+        onPress={logout}
+        labelStyle={{ color: 'red' }}
+        style={{ borderTopWidth: 1, borderTopColor: '#ccc', marginTop: 'auto' }}
+      />
+    </DrawerContentScrollView>
+  );
+};
+
+// 🔹 Tổng navigator
+const MainNavigator = () => {
+  return (
+    <Drawer.Navigator
+      screenOptions={{ headerShown: false }}
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+    >
+      <Drawer.Screen name="MainApp" component={MainStack} />
+    </Drawer.Navigator>
   );
 };
 
