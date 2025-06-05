@@ -35,7 +35,17 @@ const SurveysScreen = ({ navigation }) => {
         `${API_BASE_URL}${API_ENDPOINTS.SURVEYS}`,
         { headers: getHeaders(user?.token) }
       );
-      setSurveys(response.data);
+
+      // ✅ Kiểm tra response để đảm bảo là mảng
+      const data = response.data;
+      if (Array.isArray(data)) {
+        setSurveys(data);
+      } else if (Array.isArray(data.results)) {
+        setSurveys(data.results);
+      } else {
+        console.warn("Unexpected survey data:", data);
+        setSurveys([]); // fallback an toàn
+      }
     } catch (error) {
       console.error('Error fetching surveys:', error);
     } finally {

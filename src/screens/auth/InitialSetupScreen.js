@@ -163,10 +163,7 @@ export const InitialSetupScreen = ({ route }) => {
       );
 
       console.log('Profile update response:', result?.data);
-parentNavigation?.reset({
-  index: 0,
-  routes: [{ name: 'Login' }],
-});
+      logout();
       return true;
     } catch (error) {
       console.error('Avatar upload error details:', {
