@@ -1,38 +1,28 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
-  View, Image, ScrollView, Clipboard, Platform, StyleSheet, Alert,
-  TouchableOpacity
+  View, Text, Image, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Clipboard
 } from 'react-native';
-import { Button, Text, Surface, Portal, Modal, ActivityIndicator, Snackbar } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import API from '../../config/api';
+import api, { API_ENDPOINTS } from "../../config/api";
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import paymentStyles from '../../styles/paymentManualStyles';
 
-export default function PaymentManualScreen({ route, navigation }) {
+export default function PaymentManualScreen({ route }) {
   const { billId, amount, transferNote = `BILL${billId}` } = route?.params || {};
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-
-  const showSnackbar = (message) => {
-    setSnackbarMessage(message);
-    setSnackbarVisible(true);
-  };
 
   const downloadQrImage = async () => {
     try {
-      setLoading(true);
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        showSnackbar('Ứng dụng cần quyền truy cập thư viện để lưu mã QR');
+        Alert.alert("⚠️ Không có quyền", "Ứng dụng cần quyền truy cập thư viện.");
         return;
       }
 
-      const remoteUri = Image.resolveAssetSource(require('../../../assets/images/momo-qr.png')).uri;
+      const remoteUri = Image.resolveAssetSource(require('../../../assets/images/qr-momo.png')).uri;
       const fileUri = FileSystem.documentDirectory + 'qr-momo.png';
       await FileSystem.downloadAsync(remoteUri, fileUri);
       const asset = await MediaLibrary.createAssetAsync(fileUri);
@@ -84,13 +74,13 @@ export default function PaymentManualScreen({ route, navigation }) {
 
     setLoading(true);
     try {
-      const res = await API.patch(
-        `/bills/${billId}/upload_proof/`,
+      const res = await api.patch(
+        API_ENDPOINTS.BILL_UPLOAD_PROOF(billId),
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`,
+            // "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -111,119 +101,54 @@ export default function PaymentManualScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Surface style={styles.card}>
-          <Text style={styles.title}>Thanh toán qua MoMo</Text>
-          <Text style={styles.amount}>{amount?.toLocaleString('vi-VN')} VNĐ</Text>
-          
-          <Surface style={styles.qrContainer}>
-            <Image
-              source={require('../../../assets/images/momo-qr.png')}
-              style={styles.qrImage}
-              resizeMode="contain"
-            />
-          </Surface>
+    <ScrollView contentContainerStyle={paymentStyles.container}>
+      <Text style={paymentStyles.name}>DANG THE DANH</Text>
+      <Text style={paymentStyles.phone}>0983414384</Text>
 
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>👤 Người nhận:</Text>
-            <Text style={styles.infoValue}>DANG THE DANH</Text>
-            
-            <Text style={styles.infoLabel}>📱 Số điện thoại:</Text>
-            <Text style={styles.infoValue}>0983414384</Text>
-            
-            <Text style={styles.infoLabel}>📝 Nội dung chuyển khoản:</Text>
-            <View style={styles.noteRow}>
-              <Text style={styles.infoValue}>{transferNote}</Text>
-              <Button
-                icon="content-copy"
-                mode="text"
-                onPress={() => {
-                  Clipboard.setString(transferNote);
-                  showSnackbar('Đã sao chép nội dung chuyển khoản');
-                }}
-              >
-                Sao chép
-              </Button>
-            </View>
-          </View>
+      <View style={paymentStyles.amountBox}>
+        <Text style={paymentStyles.amountLabel}>💰 Số tiền cần chuyển:</Text>
+        <Text style={paymentStyles.amountValue}>{amount?.toLocaleString('vi-VN')}₫</Text>
+      </View>
 
-          <Button
-            mode="contained"
-            onPress={downloadQrImage}
-            style={styles.button}
-            icon="qrcode-download"
-            loading={loading}
-          >
-            Tải mã QR
-          </Button>
+      <View style={paymentStyles.noteBox}>
+        <Text style={paymentStyles.noteLabel}>📝 Nội dung chuyển khoản:</Text>
+        <View style={paymentStyles.noteRow}>
+          <Text style={paymentStyles.noteValue}>{transferNote}</Text>
+          <TouchableOpacity onPress={() => copyToClipboard(transferNote)}>
+            <Text style={paymentStyles.copyBtn}>📋</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={paymentStyles.warning}>⚠️ Vui lòng ghi đúng nội dung chuyển khoản để được xác nhận tự động.</Text>
+      </View>
 
-          <Button
-            mode="contained-tonal"
-            onPress={pickImage}
-            style={styles.button}
-            icon="image-plus"
-          >
-            Chọn ảnh ủy nhiệm chi
-          </Button>
+      <View style={paymentStyles.qrContainer}>
+        <TouchableOpacity onPress={downloadQrImage}>
+          <Image
+            source={require('../../../assets/images/qr-momo.png')}
+            style={paymentStyles.qrImage}
+            resizeMode="contain"
+          />
+          <Text style={{ textAlign: 'center', fontSize: 12, marginTop: 4, color: '#555' }}>
+            📥 Nhấn để lưu ảnh QR về máy
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-          {image && (
-            <Surface style={styles.imagePreviewContainer}>
-              <Image source={{ uri: image.uri }} style={styles.previewImage} />
-              <Button
-                mode="contained"
-                onPress={uploadProof}
-                style={styles.uploadButton}
-                loading={loading}
-                icon="cloud-upload"
-              >
-                Gửi ảnh xác nhận
-              </Button>
-            </Surface>
-          )}
-          <View style={styles.buttonContainer}>
-            {loading ? (
-              <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 10 }} />
-            ) : (
-              <TouchableOpacity style={styles.sendButton} onPress={uploadProof}>
-                <Text style={styles.sendButtonText}>✅ Gửi ảnh</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </Surface>
-      </ScrollView>
+      <TouchableOpacity style={paymentStyles.chooseButton} onPress={pickImage}>
+        <Text style={paymentStyles.chooseButtonText}>📤 Chọn ảnh uỷ nhiệm chi</Text>
+      </TouchableOpacity>
 
-      <Snackbar
-        visible={snackbarVisible}
-        onDismiss={() => setSnackbarVisible(false)}
-        duration={3000}
-      >
-        {snackbarMessage}
-      </Snackbar>
-    </View>
+      {image && (
+        <Image source={{ uri: image.uri }} style={paymentStyles.previewImage} />
+      )}
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 10 }} />
+      ) : (
+        <TouchableOpacity style={paymentStyles.sendButton} onPress={uploadProof}>
+          <Text style={paymentStyles.sendButtonText}>✅ Gửi ảnh</Text>
+        </TouchableOpacity>
+      )}
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-  },
-  buttonContainer: {
-    padding: 16,
-  },
-  sendButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
-    marginHorizontal: 16,
-  },
-  sendButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});

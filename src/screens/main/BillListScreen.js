@@ -1,11 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { Text, Card, Button, ActivityIndicator, Chip, Title } from 'react-native-paper';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
-import axios from 'axios';
+import api, { API_ENDPOINTS } from "../../config/api";
+import { Checkbox } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
+import styles from "../../styles/BillListStyles";
+import { SafeAreaView } from 'react-native-safe-area-context';
 const BILL_TYPE_VI = {
   management_fee: 'Phí quản lý',
   parking_fee: 'Phí gửi xe',
@@ -18,83 +27,53 @@ const FILTERS = [
   { label: 'Đã thanh toán', value: 'paid' },
 ];
 
-const BillListScreen = ({ navigation }) => {
+const BillListScreen = () => {
   const [bills, setBills] = useState([]);
+  const [selectedBillId, setSelectedBillId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('all');
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const fetchBills = async () => {
-    try {
-      const token = await AsyncStorage.getItem('access_token');
-      if (!token) {
-        navigation.replace('Login');
-        return;
-      }
-
-      const response = await axios.get(
-        `${API_BASE_URL}${API_ENDPOINTS.BILLS}`
-      );
-      
-      console.log('Bills API Response:', response.data);
-      
-      // Ensure we have an array of bills
-      const billsData = response.data?.results || response.data || [];
-      if (!Array.isArray(billsData)) {
-        console.error('Bills data is not an array:', billsData);
-        setBills([]);
-        return;
-      }
-      
-      setBills(billsData);
-    } catch (error) {
-      console.error('Error fetching bills:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const navigation = useNavigation();
 
   useEffect(() => {
+    const fetchBills = async () => {
+      setLoading(true);
+      try {
+        const token = await AsyncStorage.getItem("access_token");
+            const res = await api.get(API_ENDPOINTS.BILLS, {
+                headers: { Authorization: `Bearer ${token}` },
+        });
+        setBills(res.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchBills();
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchBills();
+  const handleSelect = (billId) => {
+    setSelectedBillId(billId === selectedBillId ? null : billId);
   };
 
-
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'paid':
-        return '#4CAF50';
-      case 'pending':
-        return '#FFC107';
-      default:
-        return '#F44336';
-    }
-  };
-
-  const filteredBills = Array.isArray(bills) ? bills.filter((item) => {
+  const filteredBills = bills.filter((item) => {
     const matchStatus =
       filter === 'all' ||
       (filter === 'paid' && item.status === 'paid') ||
       (filter === 'unpaid' && item.status !== 'paid');
 
-    const searchLower = searchText.toLowerCase();
-    const matchSearch =
-      item.id.toString().includes(searchLower) ||
-      (item.title || '').toLowerCase().includes(searchLower) ||
-      (item.bill_type || '').toLowerCase().includes(searchLower) ||
-      (BILL_TYPE_VI[item.bill_type] || '').toLowerCase().includes(searchLower);
+    const allText =
+      `${item.id} ${item.amount} ${item.status} ${item.bill_type} ${BILL_TYPE_VI[item.bill_type] || ''} ${item.due_date || ''}`
+        .toLowerCase();
+
+    const matchSearch = allText.includes(searchText.toLowerCase());
 
     return matchStatus && matchSearch;
-  }) : [];
+  });
 
   const totalPages = Math.ceil(filteredBills.length / itemsPerPage);
   const paginatedBills = filteredBills.slice(
@@ -103,65 +82,68 @@ const BillListScreen = ({ navigation }) => {
   );
 
   const renderBillItem = ({ item }) => (
-    <Card style={styles.card} mode="outlined">
-      <Card.Content>
-        <View style={styles.headerRow}>
-          <MaterialCommunityIcons name="file-document-outline" size={24} color="#2196F3" />
-          <Text variant="titleMedium" style={styles.title}>
-            {item.title || `Hóa đơn #${item.id}`}
+    <TouchableOpacity
+      style={[
+        styles.billItem,
+        selectedBillId === item.id && styles.selectedBill,
+      ]}
+      onPress={() => handleSelect(item.id)}
+      activeOpacity={0.8}
+    >
+      <View style={styles.row}>
+        <MaterialCommunityIcons
+          name="file-document-outline"
+          size={32}
+          color="#FFD600"
+        />
+        <Checkbox status={selectedBillId === item.id ? 'checked' : 'unchecked'} />
+        <View style={styles.info}>
+          <Text style={styles.label}>Mã: {item.id}</Text>
+          <Text>Số tiền: {item.amount.toLocaleString()} đ</Text>
+          <Text>
+            Loại hóa đơn: {BILL_TYPE_VI[item.bill_type] || item.bill_type}
           </Text>
+          <Text>
+            Trạng thái:{' '}
+            <Text style={{ color: getStatusColor(item.status) }}>
+              {item.status}
+            </Text>
+          </Text>
+          {item.due_date && (
+            <Text>
+              Hạn thanh toán: {new Date(item.due_date).toLocaleDateString()}
+            </Text>
+          )}
         </View>
-
-        <View style={styles.infoRow}>
-          <Text variant="bodyMedium" style={styles.amount}>
-            {item.amount?.toLocaleString('vi-VN')} VNĐ
-          </Text>
-          <Chip
-            style={[styles.statusChip, { backgroundColor: getStatusColor(item.status) }]}
-            textStyle={{ color: 'white' }}
-          >
-            {item.status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
-          </Chip>
-        </View>
-
-        <Text variant="bodySmall" style={styles.billType}>
-          Loại: {BILL_TYPE_VI[item.bill_type] || item.bill_type}
-        </Text>
-
-        {item.due_date && (
-          <Text variant="bodySmall" style={styles.dueDate}>
-            Hạn thanh toán: {new Date(item.due_date).toLocaleDateString('vi-VN')}
-          </Text>
-        )}
-      </Card.Content>
-    </Card>
+      </View>
+    </TouchableOpacity>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
-        <Text style={styles.loadingText}>Đang tải hóa đơn...</Text>
-      </View>
-    );
-  }
+  if (loading) return <ActivityIndicator style={{ marginTop: 50 }} />;
 
   return (
-    <View style={styles.container}>
-      <Title style={styles.screenTitle}>Danh sách hóa đơn</Title>
-
-      <View style={styles.filterContainer}>
+     <SafeAreaView style={styles.container}>
+      
+      <View style={styles.filterSearchWrapper}>
         <View style={styles.filterRow}>
           {FILTERS.map((f) => (
             <TouchableOpacity
               key={f.value}
-              style={[styles.filterBtn, filter === f.value && styles.filterBtnActive]}
+              style={[
+                styles.filterBtn,
+                filter === f.value && styles.filterBtnActive,
+              ]}
               onPress={() => {
                 setFilter(f.value);
                 setCurrentPage(1);
               }}
             >
-              <Text style={[styles.filterText, filter === f.value && styles.filterTextActive]}>
+              <Text
+                style={{
+                  color: filter === f.value ? '#fff' : '#007AFF',
+                  fontWeight: 'bold',
+                }}
+              >
                 {f.label}
               </Text>
             </TouchableOpacity>
@@ -169,192 +151,98 @@ const BillListScreen = ({ navigation }) => {
         </View>
 
         <TextInput
-          placeholder="🔍 Tìm kiếm hóa đơn..."
+          placeholder="🔍 Tìm kiếm theo bất kỳ thông tin..."
           value={searchText}
-          onChangeText={(text) => {
-            setSearchText(text);
-            setCurrentPage(1);
-          }}
+          onChangeText={setSearchText}
           style={styles.searchInput}
         />
       </View>
 
+      {/* Danh sách hóa đơn */}
       <FlatList
         data={paginatedBills}
         renderItem={renderBillItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="file-search" size={48} color="#9E9E9E" />
-            <Text style={styles.emptyText}>Không tìm thấy hóa đơn nào</Text>
-          </View>
+          <Text style={{ textAlign: 'center', marginTop: 30 }}>
+            Không có hóa đơn nào
+          </Text>
         }
       />
 
+      {/* Điều hướng trang */}
       {totalPages > 1 && (
         <View style={styles.pagination}>
           <TouchableOpacity
             onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            style={[styles.pageBtn, currentPage === 1 && styles.pageBtnDisabled]}
+            style={[
+              styles.pageBtn,
+              currentPage === 1 && styles.pageBtnDisabled,
+            ]}
           >
             <Text style={styles.pageBtnText}>◀ Trước</Text>
           </TouchableOpacity>
-
-          <Text style={styles.pageText}>
+          <Text style={{ alignSelf: 'center', marginHorizontal: 8 }}>
             Trang {currentPage} / {totalPages}
           </Text>
-
           <TouchableOpacity
             onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            style={[styles.pageBtn, currentPage === totalPages && styles.pageBtnDisabled]}
+            style={[
+              styles.pageBtn,
+              currentPage === totalPages && styles.pageBtnDisabled,
+            ]}
           >
             <Text style={styles.pageBtnText}>Tiếp ▶</Text>
           </TouchableOpacity>
         </View>
       )}
-    </View>
+
+      {/* Thanh toán */}
+      {selectedBillId && (() => {
+        const bill = bills.find((b) => b.id === selectedBillId);
+        if (bill && bill.status !== 'paid' && bill.status !== 'overdue') {
+          return (
+            <View style={styles.paymentBar}>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: '#007AFF', marginRight: 12 }]}
+                onPress={() => navigation.navigate('PaymentVnpay', { billId: selectedBillId })}
+              >
+                <Text style={styles.btnText}>Thanh toán VNPay</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: '#FFA000' }]}
+                onPress={() => navigation.navigate('PaymentManual', {
+                  billId: selectedBillId,
+                  billType: bill.bill_type,
+                  amount: bill.amount
+                })}
+              >
+                <Text style={styles.btnText}>Thanh toán thủ công</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        }
+        return null;
+      })()}
+     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    margin: 16,
-    color: '#1976D2',
-  },
-  filterContainer: {
-    padding: 16,
-    backgroundColor: 'white',
-    elevation: 2,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  filterBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#2196F3',
-  },
-  filterBtnActive: {
-    backgroundColor: '#2196F3',
-  },
-  filterText: {
-    color: '#2196F3',
-    fontWeight: '600',
-  },
-  filterTextActive: {
-    color: 'white',
-  },
-  searchInput: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#2196F3',
-  },
-  listContent: {
-    padding: 16,
-  },
-  card: {
-    marginBottom: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  title: {
-    marginLeft: 8,
-    flex: 1,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  amount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1976D2',
-  },
-  statusChip: {
-    borderRadius: 16,
-  },
-  billType: {
-    marginBottom: 4,
-    color: '#616161',
-  },
-  dueDate: {
-    marginBottom: 12,
-    color: '#616161',
-  },
-  button: {
-    marginTop: 8,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  emptyText: {
-    marginTop: 8,
-    color: '#9E9E9E',
-    fontSize: 16,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
-    elevation: 2,
-  },
-  pageBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#2196F3',
-  },
-  pageBtnDisabled: {
-    backgroundColor: '#BDBDBD',
-  },
-  pageBtnText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  pageText: {
-    marginHorizontal: 16,
-    fontSize: 16,
-    color: '#616161',
-  },
-});
+function getStatusColor(status) {
+  switch (status) {
+    case 'paid':
+      return 'green';
+    case 'pending':
+      return 'orange';
+    case 'overdue':
+      return 'red';
+    default:
+      return 'black';
+  }
+}
+
+
 
 export default BillListScreen;

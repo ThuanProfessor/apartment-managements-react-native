@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Text,
+} from 'react-native';
 import {
   Card,
   Title,
   TextInput,
   Button,
-  List,
   Portal,
   Modal,
   FAB,
   Chip,
-  Paragraph,
 } from 'react-native-paper';
 import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 
 const ComplaintsScreen = () => {
   const { user } = useAuth();
-  const [complaints, setComplaints] = useState([]);  // Initialize as empty array
+  const [complaints, setComplaints] = useState([]);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,6 +30,8 @@ const ComplaintsScreen = () => {
     category: '',
   });
 
+  const categories = ['Maintenance', 'Security', 'Noise', 'Cleanliness', 'Others'];
+
   useEffect(() => {
     fetchComplaints();
   }, []);
@@ -35,87 +39,53 @@ const ComplaintsScreen = () => {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      console.log('Fetching complaints from:', `${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`);
-      
-      const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`);
-      console.log('API Response:', response.data);
-      
-      // Ensure we have an array, even if the API returns null/undefined
-      const complaintsData = response.data?.results || response.data || [];
-      console.log('Processed complaints data:', complaintsData);
-      
-      if (!Array.isArray(complaintsData)) {
-        console.error('Complaints data is not an array:', complaintsData);
-        setComplaints([]);
-        return;
-      }
-      
-      setComplaints(complaintsData);
+      const res = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`);
+      const data = res.data?.results || res.data || [];
+      setComplaints(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching complaints:', error);
-      console.error('Error details:', error.response?.data || 'No response data');
-      setComplaints([]); // Reset to empty array on error
+      console.error('❌ Lỗi khi lấy khiếu nại:', error.response?.data || error.message);
+      setComplaints([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async () => {
+    if (!formData.title || !formData.content || !formData.category) {
+      alert('Vui lòng điền đầy đủ thông tin');
+      return;
+    }
+
     try {
-      if (!formData.title || !formData.content || !formData.category) {
-        alert('Please fill in all fields');
-        return;
-      }
-
       setLoading(true);
-      console.log('Submitting complaint with data:', formData);
 
-      // Convert data to FormData
       const formDataObj = new FormData();
       formDataObj.append('title', formData.title);
       formDataObj.append('content', formData.content);
       formDataObj.append('category', formData.category);
 
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      };
-
-      const response = await axios.post(
-        `${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`,
-        formDataObj,
-        config
-      );
-
-      console.log('Submit response:', response.data);
-      
-      setVisible(false);
-      fetchComplaints();
-      setFormData({
-        title: '',
-        content: '',
-        category: '',
+      await axios.post(`${API_BASE_URL}${API_ENDPOINTS.COMPLAINTS}`, formDataObj, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
+
+      setVisible(false);
+      setFormData({ title: '', content: '', category: '' });
+      fetchComplaints();
     } catch (error) {
-      console.error('Error submitting complaint:', error);
-      console.error('Error details:', error.response?.data || 'No response data');
-      alert('Failed to submit complaint. Please try again.');
+      console.error('❌ Lỗi khi gửi khiếu nại:', error.response?.data || error.message);
+      alert('Không thể gửi khiếu nại, vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
   };
 
-  const categories = [
-    'Maintenance',
-    'Security',
-    'Noise',
-    'Cleanliness',
-    'Others',
-  ];
+  const stripHtml = (html) => {
+    if (!html) return '';
+    return html.replace(/<[^>]*>?/gm, '');
+  };
 
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'pending':
         return '#FFA000';
       case 'in progress':
@@ -134,117 +104,112 @@ const ComplaintsScreen = () => {
         onDismiss={() => setVisible(false)}
         contentContainerStyle={styles.modalContent}
       >
-        <Title>Submit New Complaint</Title>
-        
+        <Title style={styles.modalTitle}>Gửi phản ánh mới</Title>
+
         <TextInput
-          label="Title"
+          label="Tiêu đề"
           value={formData.title}
           onChangeText={(text) => setFormData({ ...formData, title: text })}
           style={styles.input}
         />
-        
+
         <TextInput
-          label="Content"
+          label="Nội dung"
           value={formData.content}
           onChangeText={(text) => setFormData({ ...formData, content: text })}
           multiline
           numberOfLines={4}
           style={styles.input}
         />
-        
-        <ScrollView horizontal style={styles.categoriesContainer}>
+
+        <View style={styles.categoriesContainer}>
           {categories.map((category) => (
             <Chip
               key={category}
               selected={formData.category === category}
               onPress={() => setFormData({ ...formData, category })}
-              style={styles.categoryChip}
+              style={[
+                styles.categoryChip,
+                formData.category === category && styles.selectedCategoryChip,
+              ]}
+              textStyle={{
+                color: formData.category === category ? 'white' : '#333',
+              }}
             >
               {category}
             </Chip>
           ))}
-        </ScrollView>
-        
+        </View>
+
         <Button
           mode="contained"
           onPress={handleSubmit}
           loading={loading}
           style={styles.submitButton}
         >
-          Submit Complaint
+          Gửi phản ánh
         </Button>
       </Modal>
     </Portal>
   );
 
+  const renderComplaintCard = (complaint, index) => (
+    <Card key={index} style={styles.complaintCard}>
+      <Card.Content>
+        <View style={styles.headerRow}>
+          <Title style={styles.complaintTitle}>{complaint.title}</Title>
+          <Chip
+            style={[
+              styles.statusChip,
+              { backgroundColor: getStatusColor(complaint.status) },
+            ]}
+            textStyle={{ color: 'white' }}
+          >
+            {complaint.status}
+          </Chip>
+        </View>
+
+        <Text style={styles.label}>📌 Danh mục:</Text>
+        <Text style={styles.text}>{complaint.category}</Text>
+
+        <Text style={styles.label}>📝 Nội dung:</Text>
+        <Text style={styles.text}>
+          {stripHtml(complaint.description || complaint.content)}
+        </Text>
+
+        {complaint.response && (
+          <>
+            <Text style={styles.label}>💬 Phản hồi từ ban quản lý:</Text>
+            <Text style={styles.text}>
+              {stripHtml(complaint.response)}
+            </Text>
+          </>
+        )}
+      </Card.Content>
+    </Card>
+  );
+
   return (
     <View style={styles.container}>
-      <ScrollView>
-        <Card style={styles.summaryCard}>
-          <Card.Content>
-            <Title>Complaints & Feedback</Title>
-          </Card.Content>
-        </Card>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Title style={styles.pageTitle}>Phản ánh & Góp ý</Title>
 
-        <View style={styles.complaintsList}>
-          {Array.isArray(complaints) && complaints.length > 0 ? (
-            complaints.map((complaint, index) => (
-            <Card key={index} style={styles.complaintCard}>
-              <Card.Content>
-                <View style={styles.headerRow}>
-                  <Title>{complaint.title}</Title>
-                  <Chip
-                    style={[
-                      styles.statusChip,
-                      { backgroundColor: getStatusColor(complaint.status) },
-                    ]}
-                  >
-                    {complaint.status}
-                  </Chip>
-                </View>
-                
-                <List.Item
-                  title="Category"
-                  description={complaint.category}
-                  left={props => <List.Icon {...props} icon="tag" />}
-                />
-                
-                <List.Item
-                  title="Description"
-                  description={complaint.description}
-                  left={props => <List.Icon {...props} icon="text" />}
-                />
-                
-                {complaint.response && (
-                  <List.Item
-                    title="Management Response"
-                    description={complaint.response}
-                    left={props => <List.Icon {...props} icon="reply" />}
-                  />
-                )}
-                
-                <List.Item
-                  title="Submitted"
-                  description={new Date(complaint.createdAt).toLocaleDateString()}
-                  left={props => <List.Icon {...props} icon="calendar" />}
-                />
-              </Card.Content>
-            </Card>
-          ))) : (
-            <Card style={styles.complaintCard}>
-              <Card.Content>
-                <Title>No complaints yet</Title>
-              </Card.Content>
-            </Card>
-          )}
-        </View>
+        {complaints.length > 0 ? (
+          complaints.map(renderComplaintCard)
+        ) : (
+          <Card style={styles.complaintCard}>
+            <Card.Content>
+              <Title>Chưa có phản ánh nào</Title>
+            </Card.Content>
+          </Card>
+        )}
       </ScrollView>
 
       <FAB
         style={styles.fab}
         icon="plus"
         onPress={() => setVisible(true)}
-        label="New Complaint"
+        label="Tạo mới"
       />
 
       {renderComplaintModal()}
@@ -255,17 +220,29 @@ const ComplaintsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fafafa',
   },
-  summaryCard: {
-    margin: 16,
-    elevation: 4,
-  },
-  complaintsList: {
+  scrollContainer: {
     padding: 16,
+    paddingBottom: 100,
+  },
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 12,
   },
   complaintCard: {
     marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    elevation: 2,
+    padding: 4,
+  },
+  complaintTitle: {
+    fontSize: 18,
+    flex: 1,
+    fontWeight: 'bold',
+    color: '#333',
   },
   headerRow: {
     flexDirection: 'row',
@@ -273,34 +250,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  label: {
+    fontWeight: 'bold',
+    color: '#444',
+    marginTop: 8,
+  },
+  text: {
+    color: '#555',
+    marginBottom: 4,
+  },
+  statusChip: {
+    alignSelf: 'flex-start',
+    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
   modalContent: {
     backgroundColor: 'white',
     padding: 20,
-    margin: 20,
+    margin: 16,
     borderRadius: 8,
+  },
+  modalTitle: {
+    marginBottom: 16,
+    fontWeight: 'bold',
   },
   input: {
     marginBottom: 12,
+    backgroundColor: 'white',
   },
   categoriesContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginBottom: 16,
   },
   categoryChip: {
     marginRight: 8,
     marginBottom: 8,
+    backgroundColor: '#e0e0e0',
   },
-  statusChip: {
-    color: 'white',
+  selectedCategoryChip: {
+    backgroundColor: '#1976D2',
   },
   submitButton: {
-    marginTop: 16,
+    marginTop: 8,
   },
   fab: {
     position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
+    right: 16,
+    bottom: 16,
   },
 });
 

@@ -26,7 +26,7 @@ const ResidentAccountsScreen = () => {
   const fetchResidents = async (pageNumber = 1, shouldRefresh = false) => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/residents/?page=${pageNumber}`);
+      const response = await axios.get(`${API_BASE_URL}/users/?role=RESIDENT&page=${pageNumber}`);
       const { results, next } = response.data;
       
       if (shouldRefresh) {
@@ -104,7 +104,11 @@ const ResidentAccountsScreen = () => {
         <View style={styles.residentInfo}>
           <Avatar.Text 
             size={40} 
-            label={item.full_name.split(' ').map(n => n[0]).join('')} 
+            label={
+              item.full_name
+                ? item.full_name.split(' ').map(n => n[0]).join('')
+                : 'NA'
+            }
             style={{ backgroundColor: theme.colors.primary }}
           />
           <View style={styles.residentDetails}>

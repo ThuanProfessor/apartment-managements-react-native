@@ -1,45 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { Surface, Text, Title, FAB, Portal, Modal, TextInput, Button, IconButton, useTheme, ActivityIndicator } from 'react-native-paper';
-import axios from 'axios';
-import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
+import {
+  Card,
+  Title,
+  Paragraph,
+  FAB,
+  Portal,
+  Modal,
+  TextInput,
+  Button,
+  Text,
+  useTheme,
+  ActivityIndicator,
+} from 'react-native-paper';
+import api from '../../config/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ApartmentManagementScreen = () => {
   const [apartments, setApartments] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const theme = useTheme();
-
   const [formData, setFormData] = useState({
     apartment_number: '',
     floor: '',
-    block: '',
-    area: '',
-    status: 'available',
   });
+  const [refreshing, setRefreshing] = useState(false);
+  const theme = useTheme();
 
-  const fetchApartments = async (pageNumber = 1, shouldRefresh = false) => {
+  const fetchApartments = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/apartments/?page=${pageNumber}`);
-      const { results, next } = response.data;
-      
-      if (shouldRefresh) {
-        setApartments(results);
-      } else {
-        setApartments(prev => [...prev, ...results]);
-      }
-      
-      setHasMore(!!next);
-      setPage(pageNumber);
+      const token = await AsyncStorage.getItem('access_token');
+      const res = await api.get('/apartments/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setApartments(res.data);
     } catch (error) {
-      console.error('Error fetching apartments:', error);
+      console.error('Lỗi tải danh sách căn hộ:', error);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
@@ -49,146 +54,72 @@ const ApartmentManagementScreen = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchApartments(1, true);
-  };
-
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      fetchApartments(page + 1);
-    }
+    fetchApartments().finally(() => setRefreshing(false));
   };
 
   const handleSubmit = async () => {
     try {
-      setLoading(true);
-      await axios.post(`${API_BASE_URL}/apartments/`, formData);
-      setModalVisible(false);
-      setFormData({
-        apartment_number: '',
-        floor: '',
-        block: '',
-        area: '',
-        status: 'available',
+      const token = await AsyncStorage.getItem('access_token');
+      await api.post('/apartments/', formData, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      onRefresh();
+      setModalVisible(false);
+      setFormData({ apartment_number: '', floor: '' });
+      fetchApartments();
     } catch (error) {
-      console.error('Error creating apartment:', error);
-    } finally {
-      setLoading(false);
+      console.error('Lỗi thêm căn hộ:', error);
     }
   };
 
   const renderItem = ({ item }) => (
-    <Surface style={styles.apartmentCard} elevation={2}>
-      <View style={styles.apartmentHeader}>
-        <View>
-          <Title style={styles.apartmentNumber}>Căn hộ {item.apartment_number}</Title>
-          <Text style={styles.apartmentBlock}>Block {item.block} - Tầng {item.floor}</Text>
-        </View>
-        <IconButton
-          icon="dots-vertical"
-          onPress={() => {}}
-        />
-      </View>
-      
-      <View style={styles.apartmentDetails}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Diện tích:</Text>
-          <Text style={styles.detailValue}>{item.area} m²</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Trạng thái:</Text>
-          <Text 
-            style={[
-              styles.statusBadge,
-              { backgroundColor: item.status === 'available' ? '#4CAF50' : '#F44336' }
-            ]}
-          >
-            {item.status === 'available' ? 'Trống' : 'Đã thuê'}
-          </Text>
-        </View>
-      </View>
-    </Surface>
+    <TouchableOpacity>
+      <Card style={styles.card}>
+        <Card.Content>
+          <Title style={styles.cardTitle}>Căn hộ {item.apartment_number}</Title>
+          <Paragraph style={styles.cardSubtitle}>Tầng: {item.floor}</Paragraph>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={apartments}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListFooterComponent={
-          loading && !refreshing ? (
-            <ActivityIndicator style={styles.loader} />
-          ) : null
-        }
-      />
+      <Title style={styles.header}>Danh sách căn hộ</Title>
+
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 32 }} />
+      ) : (
+        <FlatList
+          data={apartments}
+          numColumns={2}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          contentContainerStyle={{ paddingBottom: 80 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
+      )}
 
       <Portal>
-        <Modal
-          visible={modalVisible}
-          onDismiss={() => setModalVisible(false)}
-          contentContainerStyle={styles.modalContent}
-        >
-          <Title style={styles.modalTitle}>Thêm căn hộ mới</Title>
-          
+        <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modalContent}>
+          <Title style={{ marginBottom: 12 }}>Thêm căn hộ</Title>
           <TextInput
             label="Số căn hộ"
             value={formData.apartment_number}
             onChangeText={(text) => setFormData({ ...formData, apartment_number: text })}
-            style={styles.input}
             mode="outlined"
+            style={styles.input}
           />
-          
           <TextInput
             label="Tầng"
             value={formData.floor}
             onChangeText={(text) => setFormData({ ...formData, floor: text })}
-            style={styles.input}
             mode="outlined"
-            keyboardType="numeric"
-          />
-          
-          <TextInput
-            label="Block"
-            value={formData.block}
-            onChangeText={(text) => setFormData({ ...formData, block: text })}
             style={styles.input}
-            mode="outlined"
           />
-          
-          <TextInput
-            label="Diện tích (m²)"
-            value={formData.area}
-            onChangeText={(text) => setFormData({ ...formData, area: text })}
-            style={styles.input}
-            mode="outlined"
-            keyboardType="numeric"
-          />
-
-          <View style={styles.modalActions}>
-            <Button 
-              mode="outlined" 
-              onPress={() => setModalVisible(false)}
-              style={styles.modalButton}
-            >
-              Hủy
-            </Button>
-            <Button 
-              mode="contained" 
-              onPress={handleSubmit}
-              style={styles.modalButton}
-              loading={loading}
-            >
-              Thêm
-            </Button>
-          </View>
+          <Button mode="contained" onPress={handleSubmit} style={{ marginTop: 12 }}>
+            Lưu
+          </Button>
         </Modal>
       </Portal>
 
@@ -201,63 +132,42 @@ const ApartmentManagementScreen = () => {
   );
 };
 
+export default ApartmentManagementScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  listContent: {
     padding: 16,
+    backgroundColor: '#F9F9F9',
   },
-  apartmentCard: {
+  header: {
+    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 16,
-    borderRadius: 12,
+    textAlign: 'center',
+    color: '#333',
+  },
+  card: {
+    flex: 1,
+    margin: 8,
     backgroundColor: 'white',
-  },
-  apartmentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  apartmentNumber: {
-    fontSize: 18,
-  },
-  apartmentBlock: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  apartmentDetails: {
-    padding: 16,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  detailLabel: {
-    color: '#666',
-  },
-  detailValue: {
-    fontWeight: 'bold',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
     borderRadius: 12,
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+    elevation: 3,
+    paddingVertical: 12,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  cardSubtitle: {
+    marginTop: 4,
+    color: '#666',
   },
   fab: {
     position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
+    right: 16,
+    bottom: 16,
   },
   modalContent: {
     backgroundColor: 'white',
@@ -265,24 +175,7 @@ const styles = StyleSheet.create({
     margin: 20,
     borderRadius: 12,
   },
-  modalTitle: {
-    marginBottom: 20,
-    textAlign: 'center',
-  },
   input: {
-    marginBottom: 16,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 16,
-  },
-  modalButton: {
-    marginLeft: 8,
-  },
-  loader: {
-    marginVertical: 16,
+    marginBottom: 12,
   },
 });
-
-export default ApartmentManagementScreen;

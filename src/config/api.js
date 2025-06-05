@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_BASE_URL = 'https://1727-14-169-164-62.ngrok-free.app';
+export const API_BASE_URL = 'https://1ef1-14-187-11-253.ngrok-free.app';
 
 // Cloudinary configuration for unsigned upload
 export const CLOUDINARY_CONFIG = {
@@ -38,12 +38,14 @@ export const API_ENDPOINTS = {
   // Locker endpoints
   LOCKERS: '/lockers/',
   LOCKER_BOOKINGS: '/locker-bookings/',
+
+  CARD_REQUESTS: '/card-requests/',
 };
 
 // OAuth2 configuration
 export const OAUTH_CONFIG = {
-  CLIENT_ID: 'aPwlnbB1gdvRBos9vtEatNVEQWx8wMA4jbzAQKCc',
-  CLIENT_SECRET: '6UK1kV2eeBuG788EOTJfgnBJVrPyZL2PO7LqarE08YPKRHa7zNNK2DHZbr5aL6LkywQNd0isjCM6FmMjxCZdoc10DFezBkwqgXDpDzvFJKXXg4V3avGJwgfAhHP1Rt3y',
+  CLIENT_ID: 'sUchuJ62jEJ2EYS98OOcyk4f07O7ft4TMCbdrdRY',
+  CLIENT_SECRET: 'g7OPMrShvrMhbhG85DNN5PnaN6gUVYVLEPapmVylE1SfRLhevp3G7nwDwSYupRIw44DkVroql67KnvHLg2MlU4F3hux80Jz53PCFpXiaSxNAloCbyBDFRpXDFqq1lCha',
 };
 
 // Helper function to encode form data
@@ -120,7 +122,8 @@ api.interceptors.response.use(
         await AsyncStorage.setItem('access_token', access_token);
 
         // Update auth header and retry original request
-        originalRequest.headers.Authorization = `Token ${access_token}`;
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
         return api(originalRequest);
       } catch (err) {
         // If refresh fails, redirect to login
