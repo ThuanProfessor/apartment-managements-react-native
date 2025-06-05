@@ -19,7 +19,7 @@ import AdminTabNavigator from './AdminTabNavigator';
 import ComplaintsScreen from '../screens/main/ComplaintsScreen';
 import SurveysScreen from '../screens/main/SurveysScreen';
 import CardRequestScreen from '../screens/main/CardRequestScreen'; // Duyệt thẻ người thân
-
+import CreateBillScreen from '../screens/admin/CreateBillScreen';
 const Drawer = createDrawerNavigator();
 
 // Custom menu trái với nút Đăng xuất
@@ -69,7 +69,12 @@ const AdminNavigator = () => {
         name="RelativeCardApproval"
         component={RelativeCardApprovalScreen}
         options={{ title: 'Duyệt thẻ người thân' }}
-        />
+      />
+      <Drawer.Screen
+        name="CreateBill"
+        component={CreateBillScreen}
+        options={{ title: 'Tạo hóa đơn cư dân' }}
+      />
     </Drawer.Navigator>
   );
 };

@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Dimensions, TextInput } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Dimensions,
+  TextInput,
+  Alert,
+  Button,
+} from 'react-native';
 import { Card, Title, Paragraph, ActivityIndicator } from 'react-native-paper';
 import api from '../../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,6 +56,8 @@ const AdminHomeScreen = ({ navigation }) => {
     }
   };
 
+  
+
   const renderApartment = ({ item }) => (
     <TouchableOpacity
       style={styles.cardWrapper}
@@ -68,6 +79,8 @@ const AdminHomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Title style={styles.header}>Quản lý căn hộ</Title>
+
+     
 
       <TextInput
         style={styles.searchInput}
@@ -113,7 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    marginBottom: 12,
+    marginVertical: 12,
     borderColor: '#ddd',
     borderWidth: 1,
   },
