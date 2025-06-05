@@ -34,7 +34,7 @@ const AdminSurveyCreateScreen = ({ navigation }) => {
     try {
       setLoading(true);
 
-      // 1. Tạo khảo sát
+      // Tạo khảo sát
       const surveyRes = await api.post('/surveys/', { title, description });
 
       const surveyId = surveyRes.data?.id;
@@ -44,7 +44,6 @@ const AdminSurveyCreateScreen = ({ navigation }) => {
 
       console.log('✅ Tạo khảo sát với ID:', surveyId);
 
-      // 2. Gửi từng câu hỏi kèm theo survey ID
       await Promise.all(
         questions.map((q) =>
           api.post('/survey-questions/', {
@@ -57,7 +56,7 @@ const AdminSurveyCreateScreen = ({ navigation }) => {
       Alert.alert('Thành công', '✅ Tạo khảo sát thành công!');
       navigation.goBack();
     } catch (err) {
-      console.error('❌ Error:', err.response?.data || err.message);
+      console.error(' Error:', err.response?.data || err.message);
       Alert.alert('Lỗi', 'Không thể tạo khảo sát. Hãy kiểm tra lại dữ liệu.');
     } finally {
       setLoading(false);

@@ -36,7 +36,7 @@ const SurveysScreen = ({ navigation }) => {
         { headers: getHeaders(user?.token) }
       );
 
-      // ✅ Kiểm tra response để đảm bảo là mảng
+      //Kiểm tra response để đảm bảo là mảng
       const data = response.data;
       if (Array.isArray(data)) {
         setSurveys(data);

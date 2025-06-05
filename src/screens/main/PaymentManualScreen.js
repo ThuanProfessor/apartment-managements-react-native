@@ -88,7 +88,7 @@ export default function PaymentManualScreen({ route }) {
       Alert.alert("✅ Thành công", "Ảnh đã được tải lên. Chờ xác nhận.");
       setImage(null);
     } catch (err) {
-      console.error("❌ Upload error:", err.response?.data || err.message);
+      console.error("Upload error:", err.response?.data || err.message);
       Alert.alert("Lỗi", "Không thể gửi ảnh lên. Vui lòng thử lại.");
     } finally {
       setLoading(false);

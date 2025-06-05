@@ -65,7 +65,7 @@ const UserSurveyAnswerScreen = ({ route, navigation }) => {
           question: parseInt(questionId),
           choice: choiceId,
         };
-        console.log('📤 Gửi survey result:', payload);
+        console.log(' Gửi survey result:', payload);
         await api.post('/survey-results/', payload);
       }
 
@@ -75,14 +75,14 @@ const UserSurveyAnswerScreen = ({ route, navigation }) => {
           survey: survey.id,
           content: feedback.trim(),
         };
-        console.log('📤 Gửi feedback:', fbPayload);
+        console.log(' Gửi feedback:', fbPayload);
         await api.post('/survey-feedbacks/', fbPayload);
       }
 
       Alert.alert('✅ Cảm ơn', 'Bạn đã hoàn thành khảo sát.');
       navigation.goBack();
     } catch (err) {
-      console.error('❌ Lỗi gửi:', err.response?.data || err.message);
+      console.error(' Lỗi gửi:', err.response?.data || err.message);
       Alert.alert('Lỗi', 'Không thể gửi kết quả khảo sát.');
     } finally {
       setSubmitting(false);

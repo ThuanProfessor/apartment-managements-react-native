@@ -9,18 +9,18 @@ export const API_BASE_URL = 'https://d2b4-113-161-52-173.ngrok-free.app';
 // Cloudinary configuration for unsigned upload
 export const CLOUDINARY_CONFIG = {
   cloud_name: 'dg5ts9slf',
-  upload_preset: 'ml_default' // Using unsigned upload preset
+  upload_preset: 'ml_default' 
 };
 
 export const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloud_name}/image/upload`;
 
 export const API_ENDPOINTS = {
   // Auth endpoints
-  LOGIN: '/auth/login/',  // Django AuthViewSet login endpoint
-  CURRENT_USER: '/users/current-user/',  // Django UserViewSet current-user endpoint
-  CHANGE_PASSWORD: '/users/change_pass/',  // Django UserViewSet change-pass endpoint
-  TOKEN: '/o/token/',  // OAuth2 token endpoint
-  UPLOAD_AVATAR: '/upload-avatar/upload/',  // Upload avatar endpoint
+  LOGIN: '/auth/login/',  
+  CURRENT_USER: '/users/current-user/',  
+  CHANGE_PASSWORD: '/users/change_pass/',  
+  TOKEN: '/o/token/',  
+  UPLOAD_AVATAR: '/upload-avatar/upload/',  
   
   // Bill endpoints
   BILLS: '/bills/',
@@ -53,14 +53,14 @@ export const OAUTH_CONFIG = {
 
 };
 
-// Helper function to encode form data
+
 export const encodeFormData = (data) => {
   return Object.keys(data)
     .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
     .join('&');
 };
 
-// Helper function to get headers with auth token
+
 export const getHeaders = (token) => {
   if (!token) return {};
   return {
@@ -77,7 +77,7 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor for authentication
+
 api.interceptors.request.use(
   async config => {
     const token = await AsyncStorage.getItem('access_token');
@@ -91,13 +91,13 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor for token refresh
+
 api.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config;
 
-    // If error is 401 and we haven't tried to refresh token yet
+    
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -126,12 +126,12 @@ api.interceptors.response.use(
         const { access_token } = response.data;
         await AsyncStorage.setItem('access_token', access_token);
 
-        // Update auth header and retry original request
+        // Update auth heade
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
 
         return api(originalRequest);
       } catch (err) {
-        // If refresh fails, redirect to login
+
         await AsyncStorage.removeItem('access_token');
         await AsyncStorage.removeItem('refresh_token');
         return Promise.reject(error);

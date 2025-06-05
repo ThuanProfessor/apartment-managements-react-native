@@ -18,7 +18,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Welcome Card */}
+      {/* */}
       <Surface style={styles.headerCard} elevation={2}>
         <View style={styles.welcomeSection}>
           <Avatar.Icon size={60} icon="account-circle" style={{ backgroundColor: theme.colors.primary }} />
@@ -29,7 +29,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </Surface>
 
-      {/* Quick Actions */}
+      {/* Truy cập nhanh */}
       <View style={styles.section}>
         <Title style={styles.sectionTitle}>Thao tác nhanh</Title>
         <View style={styles.quickActions}>
@@ -53,7 +53,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Recent Activities */}
+      {/* Hoạt động gần đây */}
       <View style={styles.section}>
         <Title style={styles.sectionTitle}>Hoạt động gần đây</Title>
         <Card style={styles.activityCard}>
@@ -70,7 +70,7 @@ const HomeScreen = ({ navigation }) => {
         </Card>
       </View>
 
-      {/* Announcements */}
+      {/* Thông báo */}
       <Card style={styles.notificationCard}>
         <Card.Content>
           <View style={styles.cardHeader}>
@@ -81,7 +81,7 @@ const HomeScreen = ({ navigation }) => {
         </Card.Content>
       </Card>
 
-      {/* Last Section */}
+      {/*  */}
       <View style={[styles.section, styles.lastSection]}>
         <Title style={styles.sectionTitle}>Thông báo</Title>
         <Card style={styles.announcementCard}>

@@ -44,13 +44,13 @@ const ResidentAccountsScreen = () => {
     const unique = Array.from(new Map(newList.map(r => [r.id, r])).values());
 
     setResidents(unique);
-    setHasMore(!!next); // ✅ Chỉ tiếp tục nếu có next
+    setHasMore(!!next); 
     setPage(pageNumber);
   } catch (error) {
     const errMsg = error.response?.data?.detail;
     if (errMsg === 'Invalid page.') {
-      console.warn('⛔ Không còn trang để tải');
-      setHasMore(false); // ✅ Chặn gọi tiếp
+      console.warn('Không còn trang để tải');
+      setHasMore(false);
     } else {
       console.error('Error fetching residents:', error.response?.data || error.message);
     }
@@ -103,7 +103,7 @@ const ResidentAccountsScreen = () => {
     setLoading(true);
     const payload = {
       ...formData,
-      role: 'RESIDENT' // ✅ Đảm bảo là cư dân
+      role: 'RESIDENT'
     };
 
     await axios.post(`${API_BASE_URL}/users/`, payload);

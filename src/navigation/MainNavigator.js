@@ -94,7 +94,7 @@ const MainStack = ({ navigation }) => {
   );
 };
 
-// 🔹 Drawer content
+// Drawer content
 const CustomDrawerContent = (props) => {
   const { logout } = useAuth();
 
@@ -118,7 +118,7 @@ const CustomDrawerContent = (props) => {
   );
 };
 
-// 🔹 Tổng navigator
+// Tổng navigator
 const MainNavigator = () => {
   return (
     <Drawer.Navigator

@@ -131,7 +131,7 @@ const PaymentsScreen = () => {
       });
 
       if (!result.cancelled) {
-        // Create form data for upload
+        // Tạo form update
         const formData = new FormData();
         formData.append('receipt', {
           uri: result.uri,
@@ -140,7 +140,7 @@ const PaymentsScreen = () => {
         });
         formData.append('paymentId', selectedPayment.id);
 
-        // Upload to server with progress tracking
+        
         const xhr = new XMLHttpRequest();
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
@@ -193,7 +193,7 @@ const PaymentsScreen = () => {
   const onRefresh = useCallback(async () => {
     try {
       setRefreshing(true);
-      // Fetch latest payment history
+      // lấy lại dữ liệu thanh toán mới
       const response = await axios.get(
         `${API_BASE_URL}${API_ENDPOINTS.PAYMENTS}`,
         { headers: getHeaders(user?.token) }

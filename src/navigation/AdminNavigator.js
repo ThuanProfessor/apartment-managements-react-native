@@ -58,7 +58,7 @@ const DrawerContentNavigator = () => (
     <Drawer.Screen name="AdminComplaints" component={AdminComplaintsScreen} options={{ title: 'Quản lý phản ánh' }} />
     <Drawer.Screen name="CreateBill" component={CreateBillScreen} options={{ title: 'Tạo hóa đơn cư dân' }} />
 
-    {/* ✅ NEW DRAWER ITEMS */}
+    {/* new drawer items */}
     <Drawer.Screen name="SurveyCreate" component={AdminSurveyCreateScreen} options={{ title: 'Tạo khảo sát' }} />
     <Drawer.Screen name="SurveyStats" component={AdminSurveyStatsScreen} options={{ title: 'Kết quả khảo sát' }} />
   </Drawer.Navigator>

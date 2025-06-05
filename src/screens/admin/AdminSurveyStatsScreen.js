@@ -1,4 +1,4 @@
-// ✅ AdminSurveyStatsScreen.js - Thống kê khảo sát
+//Thống kê khảo sát
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Title, Paragraph, Card, ActivityIndicator } from 'react-native-paper';
@@ -18,7 +18,7 @@ const AdminSurveyStatsScreen = () => {
       });
       setSurveys(res.data);
     } catch (error) {
-      console.error('❌ Lỗi khi lấy kết quả khảo sát:', error.response?.data || error.message);
+      console.error('Lỗi khi lấy kết quả khảo sát:', error.response?.data || error.message);
     } finally {
       setLoading(false);
     }

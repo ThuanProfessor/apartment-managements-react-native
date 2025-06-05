@@ -1,4 +1,4 @@
-//for User to request a relative card
+
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -34,7 +34,7 @@ const CardRequestScreen = () => {
       const data = Array.isArray(res.data) ? res.data : res.data.results;
       setCardRequests(data);
     } catch (error) {
-      console.error('❌ Lỗi tải yêu cầu:', error.response?.data || error.message);
+      console.error('Lỗi tải yêu cầu:', error.response?.data || error.message);
       Alert.alert('Lỗi', 'Không thể tải danh sách yêu cầu.');
     } finally {
       setRefreshing(false);
@@ -61,7 +61,7 @@ const CardRequestScreen = () => {
       setRelationship('');
       fetchCardRequests();
     } catch (error) {
-      console.error('❌ Lỗi gửi yêu cầu:', error.response?.data || error.message);
+      console.error('Lỗi gửi yêu cầu:', error.response?.data || error.message);
       Alert.alert('Lỗi', 'Không thể gửi yêu cầu.');
     } finally {
       setSubmitting(false);

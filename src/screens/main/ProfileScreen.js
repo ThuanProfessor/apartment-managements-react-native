@@ -82,7 +82,7 @@ const ProfileScreen = ({ navigation }) => {
     try {
       setLoading(true);
 
-      // Create form data for Cloudinary
+      // Taoh FormData để upload ảnh
       const formData = new FormData();
       formData.append('file', {
         uri: imageAsset.uri,
@@ -90,7 +90,7 @@ const ProfileScreen = ({ navigation }) => {
         name: 'avatar.jpg',
       });
       
-      // Add upload preset for unsigned upload
+      // Thêm các thông tin cần thiết cho Cloudinary
       formData.append('upload_preset', 'ml_default');
       formData.append('cloud_name', 'dxwae3xjj');
 
@@ -118,7 +118,7 @@ const ProfileScreen = ({ navigation }) => {
         throw new Error('Không tìm thấy access token');
       }
 
-      // Update profile with new avatar URL
+      // upload avatar
       await axios.patch(
         `${API_BASE_URL}/users/current-user/`,
         { avatar: cloudinaryResponse.data.secure_url },
@@ -130,7 +130,7 @@ const ProfileScreen = ({ navigation }) => {
         }
       );
 
-      // Refresh user profile to get updated avatar
+      // refresh user data
       await updateProfile();
     } catch (error) {
       console.error('Error updating avatar:', {
