@@ -50,7 +50,7 @@ const AdminHomeScreen = ({ navigation }) => {
       setFilteredApartments(apartments);
     } else {
       const filtered = apartments.filter((item) =>
-        item.apartment_number.toLowerCase().includes(text.toLowerCase())
+        item.number?.toLowerCase().includes(text.toLowerCase())
       );
       setFilteredApartments(filtered);
     }
@@ -68,9 +68,9 @@ const AdminHomeScreen = ({ navigation }) => {
           <View style={styles.iconContainer}>
             <MaterialCommunityIcons name="home-city" size={28} color="#4a90e2" />
           </View>
-          <Title style={styles.apartmentTitle}>{item.apartment_number}</Title>
-          <Paragraph style={styles.floor}>Tầng: {item.floor}</Paragraph>
-          <Paragraph style={styles.residents}>👤 Cư dân: {item.residents?.length || 0}</Paragraph>
+          <Title style={styles.apartmentTitle}>Phòng: {item.number}</Title>
+          <Paragraph style={styles.floor}>🏬 Tầng: {item.floor}</Paragraph>
+          <Paragraph style={styles.residents}>👥 Cư dân: {item.residents_count || 0}</Paragraph>
         </Card.Content>
       </Card>
     </TouchableOpacity>
@@ -84,7 +84,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
       <TextInput
         style={styles.searchInput}
-        placeholder="Tìm kiếm số căn hộ..."
+        placeholder="Tìm kiếm số phòng..."
         value={searchText}
         onChangeText={handleSearch}
       />

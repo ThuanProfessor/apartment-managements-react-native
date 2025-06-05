@@ -4,6 +4,7 @@ import AdminHomeScreen from '../screens/admin/AdminHomeScreen';
 import ResidentAccountsScreen from '../screens/admin/ResidentAccountsScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+
 const Tab = createBottomTabNavigator();
 
 const AdminTabNavigator = () => {

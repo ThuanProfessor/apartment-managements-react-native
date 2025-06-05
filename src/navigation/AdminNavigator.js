@@ -1,28 +1,36 @@
-// src/navigation/AdminNavigator.js
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItemList,
   DrawerItem,
 } from '@react-navigation/drawer';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useAuth } from '../context/AuthContext';
-import RelativeCardApprovalScreen from '../screens/admin/RelativeCardApprovalScreen';
-
 
 // Navigators
 import AdminTabNavigator from './AdminTabNavigator';
 
 // Screens
-import ComplaintsScreen from '../screens/main/ComplaintsScreen';
+import ApartmentDetailScreen from '../screens/admin/ApartmentDetailScreen';
+
 import SurveysScreen from '../screens/main/SurveysScreen';
+
 import CardRequestScreen from '../screens/main/CardRequestScreen'; // Duyệt thẻ người thân
 import CreateBillScreen from '../screens/admin/CreateBillScreen';
-const Drawer = createDrawerNavigator();
 
-// Custom menu trái với nút Đăng xuất
+import RelativeCardApprovalScreen from '../screens/admin/RelativeCardApprovalScreen';
+import AdminComplaintsScreen from '../screens/admin/AdminComplaintsScreen';
+import FeedbackDetailScreen from '../screens/admin/FeedbackDetailScreen';
+
+
+const Drawer = createDrawerNavigator();
+const Stack = createNativeStackNavigator();
+
+// ✅ Custom Drawer menu với nút đăng xuất
 const CustomDrawerContent = (props) => {
   const { logout } = useAuth();
 
@@ -40,26 +48,56 @@ const CustomDrawerContent = (props) => {
   );
 };
 
+// ✅ Drawer chứa các màn hình chính
+const DrawerContentNavigator = () => (
+  <Drawer.Navigator
+    initialRouteName="AdminTabs"
+    drawerContent={(props) => <CustomDrawerContent {...props} />}
+    screenOptions={{
+      headerShown: true,
+      drawerActiveTintColor: '#6200ee',
+    }}
+  >
+    <Drawer.Screen
+      name="AdminTabs"
+      component={AdminTabNavigator}
+      options={{ title: 'Trang chủ' }}
+    />
+    
+    <Drawer.Screen
+      name="Surveys"
+      component={SurveysScreen}
+      options={{ title: 'Khảo sát' }}
+    />
+    <Drawer.Screen
+      name="RelativeCardApproval"
+      component={RelativeCardApprovalScreen}
+      options={{ title: 'Duyệt thẻ người thân' }}
+    />
+    <Drawer.Screen
+      name="AdminComplaints"
+      component={AdminComplaintsScreen}
+      options={{ title: 'Quản lý phản ánh' }}
+    />
+  </Drawer.Navigator>
+);
+
+// ✅ Stack ngoài bao drawer + thêm màn hình chi tiết căn hộ
 const AdminNavigator = () => {
   return (
-    <Drawer.Navigator
-      initialRouteName="AdminTabs"
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
-      screenOptions={{
-        headerShown: true,
-        drawerActiveTintColor: '#6200ee',
-      }}
-    >
-      <Drawer.Screen
-        name="AdminTabs"
-        component={AdminTabNavigator}
-        options={{ title: 'Trang chủ' }}
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainDrawer" component={DrawerContentNavigator} />
+      <Stack.Screen
+        name="ApartmentDetail"
+        component={ApartmentDetailScreen}
+        options={{ headerShown: true, title: 'Chi tiết căn hộ' }}
       />
-      <Drawer.Screen
-        name="Complaints"
-        component={ComplaintsScreen}
-        options={{ title: 'Phản ánh' }}
+      <Stack.Screen
+        name="FeedbackDetailScreen"
+        component={FeedbackDetailScreen}
+        options={{ title: 'Chi tiết phản ánh' }}
       />
+
       <Drawer.Screen
         name="Surveys"
         component={SurveysScreen}
@@ -75,7 +113,10 @@ const AdminNavigator = () => {
         component={CreateBillScreen}
         options={{ title: 'Tạo hóa đơn cư dân' }}
       />
-    </Drawer.Navigator>
+    
+
+    </Stack.Navigator>
+
   );
 };
 
