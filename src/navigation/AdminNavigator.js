@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
@@ -16,21 +15,18 @@ import AdminTabNavigator from './AdminTabNavigator';
 
 // Screens
 import ApartmentDetailScreen from '../screens/admin/ApartmentDetailScreen';
-
-import SurveysScreen from '../screens/main/SurveysScreen';
-
-import CardRequestScreen from '../screens/main/CardRequestScreen'; // Duyệt thẻ người thân
-import CreateBillScreen from '../screens/admin/CreateBillScreen';
-
 import RelativeCardApprovalScreen from '../screens/admin/RelativeCardApprovalScreen';
 import AdminComplaintsScreen from '../screens/admin/AdminComplaintsScreen';
 import FeedbackDetailScreen from '../screens/admin/FeedbackDetailScreen';
+import CreateBillScreen from '../screens/admin/CreateBillScreen';
 
+// ✅ NEW SCREENS
+import AdminSurveyCreateScreen from '../screens/admin/AdminSurveyCreateScreen';
+import AdminSurveyStatsScreen from '../screens/admin/AdminSurveyStatsScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
 
-// ✅ Custom Drawer menu với nút đăng xuất
 const CustomDrawerContent = (props) => {
   const { logout } = useAuth();
 
@@ -48,7 +44,6 @@ const CustomDrawerContent = (props) => {
   );
 };
 
-// ✅ Drawer chứa các màn hình chính
 const DrawerContentNavigator = () => (
   <Drawer.Navigator
     initialRouteName="AdminTabs"
@@ -58,65 +53,24 @@ const DrawerContentNavigator = () => (
       drawerActiveTintColor: '#6200ee',
     }}
   >
-    <Drawer.Screen
-      name="AdminTabs"
-      component={AdminTabNavigator}
-      options={{ title: 'Trang chủ' }}
-    />
-    
-    <Drawer.Screen
-      name="Surveys"
-      component={SurveysScreen}
-      options={{ title: 'Khảo sát' }}
-    />
-    <Drawer.Screen
-      name="RelativeCardApproval"
-      component={RelativeCardApprovalScreen}
-      options={{ title: 'Duyệt thẻ người thân' }}
-    />
-    <Drawer.Screen
-      name="AdminComplaints"
-      component={AdminComplaintsScreen}
-      options={{ title: 'Quản lý phản ánh' }}
-    />
+    <Drawer.Screen name="AdminTabs" component={AdminTabNavigator} options={{ title: 'Trang chủ' }} />
+    <Drawer.Screen name="RelativeCardApproval" component={RelativeCardApprovalScreen} options={{ title: 'Duyệt thẻ người thân' }} />
+    <Drawer.Screen name="AdminComplaints" component={AdminComplaintsScreen} options={{ title: 'Quản lý phản ánh' }} />
+    <Drawer.Screen name="CreateBill" component={CreateBillScreen} options={{ title: 'Tạo hóa đơn cư dân' }} />
+
+    {/* ✅ NEW DRAWER ITEMS */}
+    <Drawer.Screen name="SurveyCreate" component={AdminSurveyCreateScreen} options={{ title: 'Tạo khảo sát' }} />
+    <Drawer.Screen name="SurveyStats" component={AdminSurveyStatsScreen} options={{ title: 'Kết quả khảo sát' }} />
   </Drawer.Navigator>
 );
 
-// ✅ Stack ngoài bao drawer + thêm màn hình chi tiết căn hộ
 const AdminNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainDrawer" component={DrawerContentNavigator} />
-      <Stack.Screen
-        name="ApartmentDetail"
-        component={ApartmentDetailScreen}
-        options={{ headerShown: true, title: 'Chi tiết căn hộ' }}
-      />
-      <Stack.Screen
-        name="FeedbackDetailScreen"
-        component={FeedbackDetailScreen}
-        options={{ title: 'Chi tiết phản ánh' }}
-      />
-
-      <Drawer.Screen
-        name="Surveys"
-        component={SurveysScreen}
-        options={{ title: 'Khảo sát' }}
-      />
-      <Drawer.Screen
-        name="RelativeCardApproval"
-        component={RelativeCardApprovalScreen}
-        options={{ title: 'Duyệt thẻ người thân' }}
-      />
-      <Drawer.Screen
-        name="CreateBill"
-        component={CreateBillScreen}
-        options={{ title: 'Tạo hóa đơn cư dân' }}
-      />
-    
-
+      <Stack.Screen name="ApartmentDetail" component={ApartmentDetailScreen} options={{ headerShown: true, title: 'Chi tiết căn hộ' }} />
+      <Stack.Screen name="FeedbackDetailScreen" component={FeedbackDetailScreen} options={{ title: 'Chi tiết phản ánh' }} />
     </Stack.Navigator>
-
   );
 };
 

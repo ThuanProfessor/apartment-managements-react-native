@@ -19,7 +19,8 @@ import BillsScreen from '../screens/main/BillListScreen';
 import PaymentManualScreen from '../screens/main/PaymentManualScreen';
 import PaymentVnpayScreen from '../screens/main/PaymentVnpayScreen';
 import ComplaintsScreen from '../screens/main/ComplaintsScreen';
-import SurveysScreen from '../screens/main/SurveysScreen';
+import UserSurveysScreen from '../screens/main/UserSurveysScreen';
+import UserSurveysAnswerScreen from '../screens/main/UserSurveyAnswerScreen';
 import ParkingCardScreen from '../screens/main/ParkingCardScreen';
 import CardRequestScreen from '../screens/main/CardRequestScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
@@ -67,12 +68,22 @@ const MainStack = ({ navigation }) => {
       <Stack.Screen name="Locker" component={LockerScreen} options={{ title: 'Tủ Đồ' }} />
       <Stack.Screen name="Bill" component={BillsScreen} options={{ title: 'Hóa đơn' }} />
       <Stack.Screen name="Complaints" component={ComplaintsScreen} options={{ title: 'Phản ánh' }} />
-      <Stack.Screen name="Surveys" component={SurveysScreen} options={{ title: 'Khảo sát' }} />
+    
       <Stack.Screen name="ParkingCard" component={ParkingCardScreen} options={{ title: 'Thẻ gửi xe' }} />
       <Stack.Screen name="RelativeCardRequest" component={CardRequestScreen} options={{ title: 'Đăng ký thẻ người thân' }} />
       <Stack.Screen name="PaymentManual" component={PaymentManualScreen} options={{ title: 'Thanh toán thủ công' }} />
       <Stack.Screen name="PaymentVnpay" component={PaymentVnpayScreen} options={{ title: 'Thanh toán VNPAY' }} />
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ sơ cá nhân' }} />
+      <Stack.Screen
+        name="UserSurveys"
+        component={UserSurveysScreen}
+        options={{ title: 'Khảo sát' }}
+       />
+      <Stack.Screen
+        name="UserSurveysAnswer"
+        component={UserSurveysAnswerScreen}
+        options={{ title: 'Trả lời khảo sát' }}
+      />
 
       {/* Admin screens */}
       <Stack.Screen name="ApartmentManagement" component={ApartmentManagementScreen} options={{ title: 'QL Căn hộ' }} />

@@ -5,7 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 // Các màn hình
 import HomeScreen from '../screens/main/HomeScreen';
 import ComplaintsScreen from '../screens/main/ComplaintsScreen';
-import SurveysScreen from '../screens/main/SurveysScreen';
+import UserSurveysScreen from '../screens/main/UserSurveysScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -39,7 +39,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Surveys"
-        component={SurveysScreen}
+        component={UserSurveysScreen}
         options={{
           tabBarLabel: 'Khảo sát',
           tabBarIcon: ({ color, size }) => (

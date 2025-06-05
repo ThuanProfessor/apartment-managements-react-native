@@ -54,7 +54,7 @@ const SurveysScreen = ({ navigation }) => {
   };
 
   const handleSurveyOpen = (survey) => {
-    navigation.navigate('Survey', { surveyId: survey.id });
+    navigation.navigate('UserSurveysAnswer', { survey });
   };
 
   const handleSubmitSurvey = async () => {
