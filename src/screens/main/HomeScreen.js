@@ -14,6 +14,7 @@ const HomeScreen = ({ navigation }) => {
     { title: 'Tủ Đồ', icon: 'locker-multiple', color: '#2196F3', route: 'Locker' },
     { title: 'Khảo Sát', icon: 'clipboard-text-outline', color: '#FF9800', route: 'Surveys' },
     { title: 'Thẻ thân nhân', icon: 'car-outline', color: '#9C27B0', route: 'RelativeCardRequest' },
+    { title: 'Chat', icon: 'chat-outline', color: '#00BCD4', route: 'Chat' }
   ];
 
   return (
